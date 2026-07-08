@@ -1,4 +1,20 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.7973088,
+          35.7082743
+        ]
+      },
+      "properties": {
+        "title": "駒形橋",
+        "description": "隅田川テラスとセットでよく登場する。ツイートやLLD、Dou-Da? DOING!などで複数回登場。言及されているツイート: https://x.com/polka_lion/status/1912796173137567744",
+        "image": "images/68022bfa-f77b-4c8b-a030-260068d345ac.jpg"
+      }
+    }
+  ]
 }
