@@ -160,4 +160,125 @@ const isValid = await verifyKey(rawBody, signature, timestamp, DISCORD_PUBLIC_KE
 if (!isValid) return new Response(null, { status: 401 });
 ```
 
-### 2. サー
+### 2. サーバー参加日時チェック
+
+Discord APIで `/guilds/{guild_id}/members/{user_id}` を取得する。
+`joined_at` から現在時刻を引いた日数が3日未満の場合、ephemeralでエラーメッセージを返して処理を終了する。
+
+```
+エラーメッセージ: "投稿にはサーバー参加から3日以上経過している必要があります。"
+```
+
+### 3. Google Maps URLのパース
+
+以下の形式に対応する。
+
+**短縮URL** (`maps.app.goo.gl`):
+- HEADリクエストでリダイレクト先を取得してから以下のパターンで処理する。
+
+**座標埋め込み形式**:
+```
+https://www.google.com/maps/place/.../@{lat},{lng},{zoom}z/...
+```
+`@` 以降の最初の2つの数値を lat, lng として取得する。
+
+**クエリ形式**:
+```
+https://maps.google.com/?q={lat},{lng}
+```
+`q` パラメータをパースする。
+
+パース失敗時はephemeralでエラーメッセージを返す。
+```
+エラーメッセージ: "Google Maps URLから座標を取得できませんでした。場所のURLを確認してください。"
+```
+
+### 4. 画像の処理
+
+添付ファイルがある場合:
+
+1. `attachment.url` からDiscord CDNをfetchする。
+2. JSRの `@matmen/imagescript` を使って以下を処理する。
+   - 縦が720pxを超える場合は縦720pxにリサイズする (アスペクト比維持)
+   - `encodeJPEG(80)` でJPEG・品質80%に変換する
+   - JPEG再エンコードによりEXIFは除去される
+3. ファイル名: `{uuid}.jpg`
+
+```ts
+// https://raw.githubusercontent.com/matmen/ImageScript/master/ImageScript.js
+import { Image } from "jsr:@matmen/imagescript";
+
+const bytes = new Uint8Array(await response.arrayBuffer());
+const image = await Image.decode(bytes);
+
+if (image.height > 720) {
+  image.resize(Image.RESIZE_AUTO, 720);
+}
+
+const result = await image.encodeJPEG(80);
+```
+
+### 5. GitHub PRの作成
+
+GitHub REST APIを使用する。認証にはGitHub Appsを使う。
+
+#### GitHub Apps 認証フロー
+
+1. APP_IDとPrivate KeyからJWTを生成する (有効期限10分、RS256署名)
+   - Web Crypto API (`crypto.subtle`) でRS256署名が可能
+2. JWTを使ってInstallation Tokenを取得する
+   `POST /app/installations/{installation_id}/access_tokens`
+3. 取得したInstallation Token (有効期限1時間) でREST APIを叩く
+
+#### PR作成手順
+
+**ブランチ名**: `add-spot/{uuid}`
+
+1. `GET /repos/{owner}/{repo}/git/ref/heads/main` でmainのSHAを取得
+2. `POST /repos/{owner}/{repo}/git/refs` でブランチを作成
+3. 既存の `{series}.geojson` を取得してfeatureを追記
+4. 画像がある場合は `images/{uuid}.jpg` をbase64でアップロード
+5. `POST /repos/{owner}/{repo}/pulls` でPRを作成
+
+**PRタイトル**: `[{series}] {description の先頭30文字}`
+
+**PR本文**:
+```
+## 投稿情報
+
+- シリーズ: {series_name}
+- エピソード: {episode または "未指定"}
+- 座標: {lat}, {lng}
+- 投稿者: {discord_username} ({discord_user_id})
+- 投稿日時: {ISO8601}
+
+## 説明
+
+{description}
+```
+
+### 6. ユーザーへの応答
+
+PR作成成功時はephemeralで以下を返す。
+```
+投稿を受け付けました。レビュー後にマップへ反映されます。
+PR: {pr_url}
+```
+
+---
+
+## 環境変数
+
+| 変数名 | 説明 |
+|---|---|
+| DISCORD_PUBLIC_KEY | Discord Application Public Key |
+| DISCORD_BOT_TOKEN | Discord Bot Token |
+| DISCORD_GUILD_ID | 対象のDiscordサーバーID |
+| GITHUB_APP_ID | GitHub App ID |
+| GITHUB_APP_PRIVATE_KEY | GitHub App Private Key (PEM形式) |
+| GITHUB_INSTALLATION_ID | GitHub App Installation ID |
+| GITHUB_OWNER | リポジトリオーナー |
+| GITHUB_REPO | リポジトリ名 |
+
+環境変数の管理には、Deno Deployのシークレット管理機能を用いる。
+

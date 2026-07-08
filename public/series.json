@@ -1,0 +1,17 @@
+{
+	"series": [
+		{ "id": "lovelive", "name": "ラブライブ！" },
+		{ "id": "sunshine", "name": "ラブライブ！サンシャイン!!" },
+		{
+			"id": "nijigasaki",
+			"name": "ラブライブ！虹ヶ咲学園スクールアイドル同好会"
+		},
+		{ "id": "superstar", "name": "ラブライブ！スーパースター!!" },
+		{
+			"id": "hasunosora",
+			"name": "ラブライブ！蓮ノ空女学院スクールアイドルクラブ"
+		},
+		{ "id": "musical", "name": "スクールアイドルミュージカル" },
+		{ "id": "ikizulive", "name": "イキヅライブ！LOVELIVE! BLUEBIRD" }
+	]
+}

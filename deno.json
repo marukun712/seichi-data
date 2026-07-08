@@ -4,6 +4,10 @@
 	},
 	"imports": {
 		"@biomejs/biome": "npm:@biomejs/biome@^2.5.2",
-		"@std/assert": "jsr:@std/assert@1"
+		"@std/assert": "jsr:@std/assert@1",
+		"discord-interactions": "npm:discord-interactions",
+		"octokit": "npm:octokit",
+		"@octokit/auth-app": "npm:@octokit/auth-app",
+		"imagescript": "jsr:@matmen/imagescript"
 	}
 }
