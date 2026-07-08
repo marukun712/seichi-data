@@ -41,6 +41,8 @@ cp .env.example .env
 | `GITHUB_APP_ID` | GitHub App の ID | GitHub > Settings > Developer settings > GitHub Apps |
 | `GITHUB_APP_PRIVATE_KEY` | GitHub App の秘密鍵 (PEM 形式) | GitHub App の設定画面で生成 |
 | `GITHUB_INSTALLATION_ID` | GitHub App のインストール ID | リポジトリへのインストール後、URL から取得 |
+| `GITHUB_REPO_OWNER` | PR を作成するリポジトリのオーナー名 | GitHub リポジトリの URL から取得 |
+| `GITHUB_REPO_NAME` | PR を作成するリポジトリ名 | GitHub リポジトリの URL から取得 |
 
 `GITHUB_APP_PRIVATE_KEY` は複数行の PEM ファイルです。`.env` に設定する際は改行を `\n` に置き換えてください。
 

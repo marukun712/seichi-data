@@ -47,8 +47,8 @@ export interface SpotData {
 // https://docs.github.com/en/rest/repos/contents
 export async function createSpotPR(spot: SpotData): Promise<string> {
 	const octokit = createOctokit();
-	const owner = "lovelive-academy";
-	const repo = "seichi-data";
+	const owner = getEnv("GITHUB_REPO_OWNER");
+	const repo = getEnv("GITHUB_REPO_NAME");
 	const uuid = crypto.randomUUID();
 	const branchName = `add-spot/${uuid}`;
 

@@ -1,7 +1,7 @@
 {
 	"tasks": {
 		"dev": "deno run --watch main.ts",
-		"register": "deno run --allow-net --allow-env --allow-read scripts/register-commands.ts",
+		"register": "deno run --allow-net --allow-env --allow-read --env scripts/register-commands.ts",
 		"check": "dx biome check .",
 		"check:unsafe": "dx biome check --write --unsafe ."
 	},
