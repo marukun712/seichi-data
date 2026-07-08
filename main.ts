@@ -15,6 +15,7 @@ import { checkMemberAge, verifyDiscordSignature } from "./src/discord.ts";
 import { createSpotPR } from "./src/github.ts";
 import { processImage } from "./src/image.ts";
 import { parseGoogleMapsUrl } from "./src/maps.ts";
+import { spotInputSchema } from "./src/schema.ts";
 
 const seriesJson = JSON.parse(await Deno.readTextFile("./public/series.json"));
 const SERIES_NAMES: Record<string, string> = Object.fromEntries(
@@ -47,33 +48,40 @@ async function handleSpotCommand(
 	try {
 		const options = interaction.data.options ?? [];
 
-		const getStringOption = (name: string): string | undefined => {
-			const option = options.find(
+		const getString = (name: string): string | undefined =>
+			options.find(
 				(o): o is APIApplicationCommandInteractionDataStringOption =>
 					o.name === name && o.type === ApplicationCommandOptionType.String,
-			);
-			return option?.value;
-		};
+			)?.value;
 
-		const getAttachmentId = (name: string): string | undefined => {
-			const option = options.find(
+		const getAttachmentId = (name: string): string | undefined =>
+			options.find(
 				(o): o is APIApplicationCommandInteractionDataAttachmentOption =>
 					o.name === name && o.type === ApplicationCommandOptionType.Attachment,
-			);
-			return option?.value;
-		};
+			)?.value;
 
-		const getRequiredStringOption = (name: string): string => {
-			const value = getStringOption(name);
-			if (!value) throw new Error(`Missing required option: ${name}`);
-			return value;
-		};
+		const parsed = spotInputSchema.safeParse({
+			series: getString("series"),
+			title: getString("title"),
+			description: getString("description"),
+			maps_url: getString("maps_url"),
+			episode: getString("episode") ?? null,
+			imageOptionId: getAttachmentId("image") ?? null,
+		});
 
-		const series = getRequiredStringOption("series");
-		const description = getRequiredStringOption("description");
-		const mapsUrl = getRequiredStringOption("maps_url");
-		const episode = getStringOption("episode") ?? null;
-		const imageOptionId = getAttachmentId("image") ?? null;
+		if (!parsed.success) {
+			await followUp("入力内容が不正です。もう一度お試しください。");
+			return;
+		}
+
+		const {
+			series,
+			title,
+			description,
+			maps_url: mapsUrl,
+			episode,
+			imageOptionId,
+		} = parsed.data;
 
 		const user = interaction.member?.user ?? interaction.user;
 		if (!user) throw new Error("No user in interaction");
@@ -106,6 +114,7 @@ async function handleSpotCommand(
 		const prUrl = await createSpotPR({
 			series,
 			seriesName: SERIES_NAMES[series] ?? series,
+			title,
 			description,
 			episode,
 			lat: coords.lat,

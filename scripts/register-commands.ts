@@ -21,6 +21,9 @@ const command = new SlashCommandBuilder()
 			),
 	)
 	.addStringOption((option) =>
+		option.setName("title").setDescription("施設名").setRequired(true),
+	)
+	.addStringOption((option) =>
 		option.setName("description").setDescription("説明").setRequired(true),
 	)
 	.addStringOption((option) =>

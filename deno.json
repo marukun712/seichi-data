@@ -12,6 +12,7 @@
 		"discord.js": "npm:discord.js@^14.26.4",
 		"octokit": "npm:octokit",
 		"@octokit/auth-app": "npm:@octokit/auth-app",
-		"imagescript": "jsr:@matmen/imagescript"
+		"imagescript": "jsr:@matmen/imagescript",
+		"zod": "npm:zod@^4.4.3"
 	}
 }
