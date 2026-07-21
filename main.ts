@@ -11,16 +11,28 @@ import {
 	InteractionResponseType,
 	InteractionType,
 } from "discord.js";
+import seriesJson from "./public/series.json";
 import { checkMemberAge, verifyDiscordSignature } from "./src/discord.ts";
 import { createSpotPR } from "./src/github.ts";
 import { processImage } from "./src/image.ts";
 import { parseGoogleMapsUrl } from "./src/maps.ts";
 import { spotInputSchema } from "./src/schema.ts";
 
-const seriesJson = JSON.parse(await Deno.readTextFile("./public/series.json"));
 const SERIES_NAMES: Record<string, string> = Object.fromEntries(
 	seriesJson.series.map((s: { id: string; name: string }) => [s.id, s.name]),
 );
+
+export interface Env {
+	DISCORD_PUBLIC_KEY: string;
+	DISCORD_BOT_TOKEN: string;
+	DISCORD_GUILD_ID: string;
+	DISCORD_APPLICATION_ID: string;
+	GITHUB_APP_ID: string;
+	GITHUB_APP_PRIVATE_KEY: string;
+	GITHUB_INSTALLATION_ID: string;
+	GITHUB_REPO_OWNER: string;
+	GITHUB_REPO_NAME: string;
+}
 
 function isChatInputCommand(
 	interaction: APIInteraction,
@@ -33,6 +45,7 @@ function isChatInputCommand(
 
 async function handleSpotCommand(
 	interaction: APIChatInputApplicationCommandInteraction,
+	env: Env,
 ): Promise<void> {
 	const followUp = async (content: string) => {
 		await fetch(
@@ -86,7 +99,7 @@ async function handleSpotCommand(
 		const user = interaction.member?.user ?? interaction.user;
 		if (!user) throw new Error("No user in interaction");
 
-		const isEligible = await checkMemberAge(user.id);
+		const isEligible = await checkMemberAge(user.id, env);
 		if (!isEligible) {
 			await followUp(
 				"投稿にはサーバー参加から3日以上経過している必要があります。",
@@ -111,18 +124,21 @@ async function handleSpotCommand(
 			}
 		}
 
-		const prUrl = await createSpotPR({
-			series,
-			seriesName: SERIES_NAMES[series] ?? series,
-			title,
-			description,
-			episode,
-			lat: coords.lat,
-			lng: coords.lng,
-			imageBytes,
-			discordUsername: user.username,
-			discordUserId: user.id,
-		});
+		const prUrl = await createSpotPR(
+			{
+				series,
+				seriesName: SERIES_NAMES[series] ?? series,
+				title,
+				description,
+				episode,
+				lat: coords.lat,
+				lng: coords.lng,
+				imageBytes,
+				discordUsername: user.username,
+				discordUserId: user.id,
+			},
+			env,
+		);
 
 		await followUp(
 			`投稿を受け付けました。レビュー後にマップへ反映されます。\nPR: ${prUrl}`,
@@ -133,34 +149,39 @@ async function handleSpotCommand(
 	}
 }
 
-Deno.serve(async (req: Request) => {
-	if (req.method !== "POST" || new URL(req.url).pathname !== "/interactions") {
-		return new Response(null, { status: 404 });
-	}
+export default {
+	async fetch(req: Request, env: Env): Promise<Response> {
+		if (
+			req.method !== "POST" ||
+			new URL(req.url).pathname !== "/interactions"
+		) {
+			return new Response(null, { status: 404 });
+		}
 
-	const { valid, body } = await verifyDiscordSignature(req);
-	if (!valid) return new Response(null, { status: 401 });
+		const { valid, body } = await verifyDiscordSignature(req, env);
+		if (!valid) return new Response(null, { status: 401 });
 
-	const interaction: APIInteraction = JSON.parse(body);
+		const interaction: APIInteraction = JSON.parse(body);
 
-	if (interaction.type === InteractionType.Ping) {
-		return new Response(
-			JSON.stringify({ type: InteractionResponseType.Pong }),
-			{ headers: { "Content-Type": "application/json" } },
-		);
-	}
+		if (interaction.type === InteractionType.Ping) {
+			return new Response(
+				JSON.stringify({ type: InteractionResponseType.Pong }),
+				{ headers: { "Content-Type": "application/json" } },
+			);
+		}
 
-	if (isChatInputCommand(interaction)) {
-		handleSpotCommand(interaction).catch(console.error);
+		if (isChatInputCommand(interaction)) {
+			handleSpotCommand(interaction, env).catch(console.error);
 
-		return new Response(
-			JSON.stringify({
-				type: InteractionResponseType.DeferredChannelMessageWithSource,
-				data: { flags: 64 },
-			}),
-			{ headers: { "Content-Type": "application/json" } },
-		);
-	}
+			return new Response(
+				JSON.stringify({
+					type: InteractionResponseType.DeferredChannelMessageWithSource,
+					data: { flags: 64 },
+				}),
+				{ headers: { "Content-Type": "application/json" } },
+			);
+		}
 
-	return new Response(null, { status: 400 });
-});
+		return new Response(null, { status: 400 });
+	},
+};

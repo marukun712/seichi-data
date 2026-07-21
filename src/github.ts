@@ -22,22 +22,25 @@ function jsonToBase64(obj: unknown): string {
 	return btoa(binary);
 }
 
-function createOctokit(): Octokit {
+function createOctokit(env: Record<string, string>): Octokit {
 	return new Octokit({
 		authStrategy: createAppAuth,
 		auth: {
-			appId: getEnv("GITHUB_APP_ID"),
-			privateKey: getEnv("GITHUB_APP_PRIVATE_KEY"),
-			installationId: getEnv("GITHUB_INSTALLATION_ID"),
+			appId: getEnv(env, "GITHUB_APP_ID"),
+			privateKey: getEnv(env, "GITHUB_APP_PRIVATE_KEY"),
+			installationId: getEnv(env, "GITHUB_INSTALLATION_ID"),
 		},
 	});
 }
 
 // https://docs.github.com/en/rest/repos/contents
-export async function createSpotPR(spot: SpotData): Promise<string> {
-	const octokit = createOctokit();
-	const owner = getEnv("GITHUB_REPO_OWNER");
-	const repo = getEnv("GITHUB_REPO_NAME");
+export async function createSpotPR(
+	spot: SpotData,
+	env: Record<string, string>,
+): Promise<string> {
+	const octokit = createOctokit(env);
+	const owner = getEnv(env, "GITHUB_REPO_OWNER");
+	const repo = getEnv(env, "GITHUB_REPO_NAME");
 	const uuid = crypto.randomUUID();
 	const branchName = `add-spot/${uuid}`;
 

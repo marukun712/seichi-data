@@ -1,9 +1,13 @@
 // https://discord.js.org/docs/packages/discord.js/main/REST:Class
 // https://discord.js.org/docs/packages/discord.js/main/SlashCommandBuilder:Class
 import { REST, Routes, SlashCommandBuilder } from "discord.js";
-import { getEnv } from "../src/env.ts";
+import seriesJson from "../public/series.json" with { type: "json" };
 
-const seriesJson = JSON.parse(await Deno.readTextFile("./public/series.json"));
+function getEnv(name: string): string {
+	const value = Deno.env.get(name);
+	if (!value) throw new Error(`${name} is not set`);
+	return value;
+}
 
 const command = new SlashCommandBuilder()
 	.setName("spot")
