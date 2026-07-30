@@ -1,4 +1,19 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          138.8549297,
+          35.1026537
+        ]
+      },
+      "properties": {
+        "title": "沼津駅",
+        "description": "ラブライブ！サンシャインの聖地"
+      }
+    }
+  ]
 }
