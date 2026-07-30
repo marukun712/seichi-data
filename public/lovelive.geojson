@@ -1,4 +1,19 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.7600289,
+          35.6821265
+        ]
+      },
+      "properties": {
+        "title": "行幸通り",
+        "description": "Snow halationが披露された場所"
+      }
+    }
+  ]
 }
