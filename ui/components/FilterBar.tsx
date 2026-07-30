@@ -37,7 +37,7 @@ const FilterBar = (props: Props) => {
 					value={props.seriesId}
 					onInput={(e) => props.onSeriesChange(e.currentTarget.value)}
 				>
-					<option value="all">すべてのシリーズ</option>
+					<option value="">すべてのシリーズ</option>
 					<For each={props.series}>
 						{(s) => <option value={s.id}>{s.name}</option>}
 					</For>
