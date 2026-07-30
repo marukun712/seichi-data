@@ -1,4 +1,20 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.7973088,
+          35.7082743
+        ]
+      },
+      "properties": {
+        "title": "駒形橋",
+        "description": "ツイート・LLDなどに複数回登場",
+        "image": "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg"
+      }
+    }
+  ]
 }
