@@ -87,6 +87,11 @@ async function handleSpotCommand(
 
 		const { series, title, plusCode, description, imageOptionId } = parsed.data;
 
+		if (plusCode.indexOf("+") !== 8) {
+			await followUp("フルPluscodeを入力してください");
+			return;
+		}
+
 		const user = interaction.member?.user ?? interaction.user;
 		if (!user) throw new Error("No user in interaction");
 

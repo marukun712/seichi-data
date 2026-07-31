@@ -15,6 +15,9 @@ const Card = (props: Props) => {
 			</button>
 			<h3>{props.feature.properties.series.name}</h3>
 			<h2>{props.feature.properties.title}</h2>
+			<Show when={props.feature.properties.description}>
+				<p>{props.feature.properties.description}</p>
+			</Show>
 			<Show when={props.feature.properties.image}>
 				<img
 					src={props.feature.properties.image}
