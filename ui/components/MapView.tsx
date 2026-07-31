@@ -1,67 +1,71 @@
 import * as maplibregl from "maplibre-gl";
-import { createEffect, onMount } from "solid-js";
-import type { Series, SpotFeature } from "../types.ts";
+import { createEffect, createSignal, onMount } from "solid-js";
+import type { FeatureView } from "../../src/schema.ts";
 
-const SOURCE_ID = "spots";
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 interface Props {
-	features: () => SpotFeature[];
-	series: Series[];
-	selected: SpotFeature | null;
-	onFeatureClick: (feature: SpotFeature) => void;
+	features: FeatureView[];
+	selected: FeatureView | null;
+	seriesColor: string | null;
+	onFeatureClick: (feature: FeatureView) => void;
 }
 
 const MapView = (props: Props) => {
+	const [loaded, setLoaded] = createSignal(false);
+
 	let container: HTMLDivElement | undefined;
 	let map: maplibregl.Map | undefined;
+	let markers: maplibregl.Marker[] = [];
 
-	function layerId(seriesId: string): string {
-		return `spots-${seriesId}`;
+	function clearMarkers() {
+		for (const marker of markers) {
+			marker.remove();
+		}
+		markers = [];
 	}
 
-	function addSeriesLayers(seriesList: Series[]) {
-		for (const s of seriesList) {
-			const id = layerId(s.id);
-			map?.addLayer({
-				id,
-				type: "circle",
-				source: SOURCE_ID,
-				filter: ["==", ["get", "series"], s.id],
-				paint: {
-					"circle-radius": 8,
-					"circle-color": s.color,
-					"circle-stroke-width": 2,
-					"circle-stroke-color": "#ffffff",
-				},
+	function addMarkers(features: FeatureView[]) {
+		if (!map) return;
+
+		for (const feature of features) {
+			const color = feature.properties.series.color;
+			const [lng, lat] = feature.geometry.coordinates;
+
+			const marker = new maplibregl.Marker({ color })
+				.setLngLat([lng, lat])
+				.addTo(map);
+
+			marker.getElement().style.cursor = "pointer";
+			marker.getElement().addEventListener("click", () => {
+				props.onFeatureClick(feature);
 			});
 
-			map?.on("click", id, (e) => {
-				if (!e.features || e.features.length === 0) return;
-				const f = e.features[0];
-				if (f.geometry.type !== "Point") return;
-				if (!f.properties) return;
-				props.onFeatureClick({
-					type: "Feature",
-					geometry: { type: "Point", coordinates: f.geometry.coordinates },
-					properties: {
-						title: f.properties.title,
-						description: f.properties.description,
-						episode: f.properties.episode,
-						image: f.properties.image,
-						series: f.properties.series,
-					},
-				});
-			});
-
-			map?.on("mouseenter", id, () => {
-				if (map) map.getCanvas().style.cursor = "pointer";
-			});
-
-			map?.on("mouseleave", id, () => {
-				if (map) map.getCanvas().style.cursor = "";
-			});
+			markers.push(marker);
 		}
+	}
+
+	function setColor(color: string | null) {
+		if (!map) return;
+
+		const layers = map.getStyle().layers;
+
+		layers.forEach((layer) => {
+			if (!map) return;
+			const id = layer.id;
+
+			if (/^(road|tunnel|bridge)_/.test(id) && layer.type === "line") {
+				map.setPaintProperty(id, "line-color", color ?? "#e40081");
+			}
+
+			if (id.startsWith("building")) {
+				const prop =
+					layer.type === "fill-extrusion"
+						? "fill-extrusion-color"
+						: "fill-color";
+				map.setPaintProperty(id, prop, color ?? "#e40081");
+			}
+		});
 	}
 
 	onMount(() => {
@@ -75,29 +79,24 @@ const MapView = (props: Props) => {
 			center: [137.5, 36.5],
 			zoom: 5,
 		});
-
 		map.on("load", () => {
-			map?.setPaintProperty("building", "fill-color", "#e64980");
-			map?.setPaintProperty("building-3d", "fill-extrusion-color", "#e64980");
-			map?.setPaintProperty("road_motorway", "line-color", "#e64980");
-			map?.setPaintProperty("road_trunk_primary", "line-color", "#e64980");
-
-			const features = props.features();
-			map?.addSource(SOURCE_ID, {
-				type: "geojson",
-				data: { type: "FeatureCollection", features },
-			});
-
-			addSeriesLayers(props.series);
+			addMarkers(props.features);
+			setColor(props.seriesColor);
+			setLoaded(true);
 		});
 	});
 
 	createEffect(() => {
-		const features = props.features();
-		const source = map?.getSource(SOURCE_ID);
-		if (source instanceof maplibregl.GeoJSONSource) {
-			source.setData({ type: "FeatureCollection", features });
-		}
+		const features = props.features;
+		if (!loaded()) return;
+		clearMarkers();
+		addMarkers(features);
+	});
+
+	createEffect(() => {
+		const color = props.seriesColor;
+		if (!loaded()) return;
+		setColor(color);
 	});
 
 	createEffect(() => {

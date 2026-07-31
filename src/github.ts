@@ -4,7 +4,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import { Octokit } from "octokit";
 import type { Env } from "../main.ts";
 import { getEnv } from "./env.ts";
-import type { SpotData } from "./schema.ts";
+import { type Feature, geoJSONSchema, type SpotData } from "./schema.ts";
 
 function toP8Pem(pem: string): string {
 	if (!pem.includes("BEGIN RSA PRIVATE KEY")) return pem;
@@ -48,7 +48,7 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 	const { data: existingFile } = await octokit.rest.repos.getContent({
 		owner,
 		repo,
-		path: `public/${spot.series}.geojson`,
+		path: `public/${spot.series.id}.geojson`,
 	});
 
 	if (Array.isArray(existingFile) || !("content" in existingFile)) {
@@ -59,9 +59,15 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 	const contentBytes = Uint8Array.from(atob(rawContent), (c) =>
 		c.charCodeAt(0),
 	);
-	const geojson = JSON.parse(new TextDecoder().decode(contentBytes));
 
-	const newFeature = {
+	const geojson = JSON.parse(new TextDecoder().decode(contentBytes));
+	const parsed = geoJSONSchema.safeParse(geojson);
+
+	if (!parsed.success) {
+		throw new Error("Invalid GeoJSON");
+	}
+
+	const newFeature: Feature = {
 		type: "Feature",
 		geometry: {
 			type: "Point",
@@ -69,18 +75,22 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 		},
 		properties: {
 			title: spot.title,
-			description: spot.description,
-			...(spot.episode ? { episode: spot.episode } : {}),
-			...(spot.imageBytes ? { image: `images/${uuid}.jpg` } : {}),
 		},
 	};
+
+	if (spot.description) {
+		newFeature.properties.description = spot.description;
+	}
+	if (spot.imageBytes) {
+		newFeature.properties.image = `images/${uuid}.jpg`;
+	}
 
 	geojson.features.push(newFeature);
 
 	await octokit.rest.repos.createOrUpdateFileContents({
 		owner,
 		repo,
-		path: `public/${spot.series}.geojson`,
+		path: `public/${spot.series.id}.geojson`,
 		message: `Add spot: ${spot.title}`,
 		content: Buffer.from(JSON.stringify(geojson, null, 2)).toString("base64"),
 		sha: existingFile.sha,
@@ -100,21 +110,20 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 
 	const prBody = `## 投稿情報
 
-- シリーズ: ${spot.seriesName}
+- シリーズ: ${spot.series.name}
 - 施設名: ${spot.title}
-- エピソード: ${spot.episode ?? "未指定"}
 - 座標: ${spot.lat}, ${spot.lng}
 - 投稿者: ${spot.discordUsername} (${spot.discordUserId})
 - 投稿日時: ${new Date().toISOString()}
 
 ## 説明
 
-${spot.description}`;
+${spot.description ?? "(説明なし)"}`;
 
 	const { data: pr } = await octokit.rest.pulls.create({
 		owner,
 		repo,
-		title: `[${spot.series}] ${spot.title}`,
+		title: `[${spot.series.name}] ${spot.title}`,
 		body: prBody,
 		head: branchName,
 		base: "main",

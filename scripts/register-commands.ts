@@ -24,19 +24,22 @@ const command = new SlashCommandBuilder()
 			),
 	)
 	.addStringOption((option) =>
-		option.setName("title").setDescription("施設名").setRequired(true),
-	)
-	.addStringOption((option) =>
-		option.setName("description").setDescription("説明").setRequired(true),
-	)
-	.addStringOption((option) =>
 		option
-			.setName("maps_url")
-			.setDescription("Google Maps URL")
+			.setName("title")
+			.setDescription("場所の名前を入力")
 			.setRequired(true),
 	)
 	.addStringOption((option) =>
-		option.setName("episode").setDescription("エピソード").setRequired(false),
+		option
+			.setName("pluscode")
+			.setDescription("場所のPluscodeを入力")
+			.setRequired(true),
+	)
+	.addStringOption((option) =>
+		option
+			.setName("description")
+			.setDescription("場所の説明を入力")
+			.setRequired(false),
 	)
 	.addAttachmentOption((option) =>
 		option.setName("image").setDescription("画像").setRequired(false),
