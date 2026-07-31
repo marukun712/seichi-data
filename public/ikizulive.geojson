@@ -15,6 +15,20 @@
         "description": "ツイート・LLDなどに複数回登場",
         "image": "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.794313,
+          35.709062
+        ]
+      },
+      "properties": {
+        "title": "test",
+        "description": "test"
+      }
     }
   ]
 }
