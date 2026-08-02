@@ -14,6 +14,19 @@
         "title": "沼津駅",
         "description": "ラブライブ！サンシャインの聖地"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.712938,
+          41.764937
+        ]
+      },
+      "properties": {
+        "title": "八幡坂"
+      }
     }
   ]
 }
