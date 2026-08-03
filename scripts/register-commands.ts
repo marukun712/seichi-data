@@ -32,7 +32,7 @@ const command = new SlashCommandBuilder()
 	.addStringOption((option) =>
 		option
 			.setName("pluscode")
-			.setDescription("場所のPluscodeを入力")
+			.setDescription("場所コードを入力")
 			.setRequired(true),
 	)
 	.addStringOption((option) =>

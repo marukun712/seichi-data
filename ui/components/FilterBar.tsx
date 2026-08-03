@@ -1,3 +1,4 @@
+import { A } from "@solidjs/router";
 import { createSignal, For } from "solid-js";
 import type { Feature, FeatureView, Series } from "../../src/schema.ts";
 
@@ -28,7 +29,13 @@ const FilterBar = (props: Props) => {
 
 	return (
 		<div>
-			<div style={{ display: "flex", gap: "12px" }}>
+			<div>
+				<p>ラブライブ！シリーズの聖地情報をまとめたマップです。</p>
+				<A href="/register">
+					<button type="button">聖地を登録する</button>
+				</A>
+			</div>
+			<div style={{ display: "flex", gap: "12px", "margin-top": "32px" }}>
 				<select
 					value={props.currentSeries}
 					onInput={(e) => props.onSeriesChange(e.currentTarget.value)}

@@ -88,7 +88,7 @@ async function handleSpotCommand(
 		const { series, title, plusCode, description, imageOptionId } = parsed.data;
 
 		if (plusCode.indexOf("+") !== 8) {
-			await followUp("フルPluscodeを入力してください");
+			await followUp("フルの場所コードを入力してください");
 			return;
 		}
 
@@ -105,7 +105,7 @@ async function handleSpotCommand(
 
 		const coords = decode(plusCode);
 		if (!coords) {
-			await followUp("Pluscodeから座標をデコードできませんでした。");
+			await followUp("場所コードから座標を取得できませんでした。");
 			return;
 		}
 

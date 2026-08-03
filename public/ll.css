@@ -117,18 +117,6 @@ article {
 	font-size: 0.9rem;
 }
 
-footer {
-	background: var(--ll-ink);
-	color: rgba(255, 255, 255, 0.75);
-	padding: 3rem 1.5rem;
-	font-size: 0.875rem;
-	text-align: center;
-}
-
-footer a {
-	color: rgba(255, 255, 255, 0.9);
-}
-
 nav {
 	display: flex;
 	align-items: center;
