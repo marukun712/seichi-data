@@ -1,4 +1,20 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.186688,
+          34.682688
+        ]
+      },
+      "properties": {
+        "title": "神戸ポートタワー",
+        "description": "映画『虹ヶ咲学園スクールアイドル同好会 完結編第2章』「Circle of Love」より",
+        "image": "images/bdf115b6-1136-4eb8-a7ec-0066ad6a3d12.jpg"
+      }
+    }
+  ]
 }
