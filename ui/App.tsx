@@ -12,7 +12,7 @@ const Home = () => {
 	const [series, setSeries] = createSignal<Series[]>([]);
 	const [allFeatures, setAllFeatures] = createSignal<FeatureView[]>([]);
 
-	const [currentSeries, setCurrentSeries] = createSignal("all");
+	const [selectedSeries, setSelectedSeries] = createSignal<string[]>([]);
 	const [selected, setSelected] = createSignal<FeatureView | null>(null);
 
 	onMount(async () => {
@@ -22,24 +22,31 @@ const Home = () => {
 	});
 
 	const filtered = (): FeatureView[] => {
-		const sid = currentSeries();
-		if (sid === "all") return allFeatures();
-		return allFeatures().filter((f) => f.properties.series.id === sid);
+		const ids = selectedSeries();
+		if (ids.length === 0) return allFeatures();
+		return allFeatures().filter((f) => ids.includes(f.properties.series.id));
 	};
 
 	const seriesColor = (): string | null => {
-		const sid = currentSeries();
-		if (sid === "all") return null;
-		return series().find((s) => s.id === sid)?.color ?? null;
+		const ids = selectedSeries();
+		if (ids.length !== 1) return null;
+		return series().find((s) => s.id === ids[0])?.color ?? null;
+	};
+
+	const toggleSeries = (id: string) => {
+		setSelectedSeries((prev) =>
+			prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+		);
 	};
 
 	return (
 		<main>
 			<FilterBar
 				series={series()}
-				currentSeries={currentSeries()}
+				selectedSeries={selectedSeries()}
 				features={filtered()}
-				onSeriesChange={setCurrentSeries}
+				onSeriesToggle={toggleSeries}
+				onSeriesClear={() => setSelectedSeries([])}
 				onFeatureSelect={setSelected}
 			/>
 			<div class="map-area">

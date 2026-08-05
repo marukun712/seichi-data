@@ -56,14 +56,20 @@ const MapView = (props: Props) => {
 
 			if (/^(road|tunnel|bridge)_/.test(id) && layer.type === "line") {
 				map.setPaintProperty(id, "line-color", color ?? "#e40081");
+				map.setPaintProperty(id, "line-opacity", 0.05);
 			}
 
 			if (id.startsWith("building")) {
-				const prop =
+				const colorProp =
 					layer.type === "fill-extrusion"
 						? "fill-extrusion-color"
 						: "fill-color";
-				map.setPaintProperty(id, prop, color ?? "#e40081");
+				const opacityProp =
+					layer.type === "fill-extrusion"
+						? "fill-extrusion-opacity"
+						: "fill-opacity";
+				map.setPaintProperty(id, colorProp, color ?? "#e40081");
+				map.setPaintProperty(id, opacityProp, 0.5);
 			}
 		});
 	}

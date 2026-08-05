@@ -13,16 +13,16 @@ const Card = (props: Props) => {
 			<button type="button" onClick={props.onClose} aria-label="閉じる">
 				<X />
 			</button>
-			<h3>{props.feature.properties.series.name}</h3>
-			<h2>{props.feature.properties.title}</h2>
-			<Show when={props.feature.properties.description}>
-				<p>{props.feature.properties.description}</p>
-			</Show>
+			<h4>{props.feature.properties.series.name}</h4>
+			<h3>{props.feature.properties.title}</h3>
 			<Show when={props.feature.properties.image}>
 				<img
 					src={props.feature.properties.image}
 					alt={props.feature.properties.title}
 				/>
+			</Show>
+			<Show when={props.feature.properties.description}>
+				<p>{props.feature.properties.description}</p>
 			</Show>
 		</article>
 	);

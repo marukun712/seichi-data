@@ -4,11 +4,19 @@ import type { Feature, FeatureView, Series } from "../../src/schema.ts";
 
 interface Props {
 	series: Series[];
-	currentSeries: string;
+	selectedSeries: string[];
 	features: FeatureView[];
-	onSeriesChange: (v: string) => void;
+	onSeriesToggle: (id: string) => void;
+	onSeriesClear: () => void;
 	onFeatureSelect: (f: Feature) => void;
 }
+
+const inactiveStyle = {
+	background: "#fff",
+	color: "var(--ll-ink-soft)",
+	"border-color": "var(--ll-hairline)",
+	"box-shadow": "none",
+};
 
 const FilterBar = (props: Props) => {
 	const [results, setResults] = createSignal<Feature[]>([]);
@@ -35,16 +43,41 @@ const FilterBar = (props: Props) => {
 					<button type="button">聖地を登録する</button>
 				</A>
 			</div>
-			<div style={{ display: "flex", gap: "12px", "margin-top": "32px" }}>
-				<select
-					value={props.currentSeries}
-					onInput={(e) => props.onSeriesChange(e.currentTarget.value)}
+			<div
+				style={{
+					display: "flex",
+					"flex-wrap": "wrap",
+					gap: "8px",
+					"margin-top": "24px",
+				}}
+			>
+				<button
+					type="button"
+					style={props.selectedSeries.length === 0 ? {} : inactiveStyle}
+					onClick={props.onSeriesClear}
 				>
-					<option value="all">すべてのシリーズ</option>
-					<For each={props.series}>
-						{(s) => <option value={s.id}>{s.name}</option>}
-					</For>
-				</select>
+					すべて
+				</button>
+				<For each={props.series}>
+					{(s) => {
+						const isActive = () => props.selectedSeries.includes(s.id);
+						return (
+							<button
+								type="button"
+								style={
+									isActive()
+										? { background: s.color, "border-color": s.color }
+										: inactiveStyle
+								}
+								onClick={() => props.onSeriesToggle(s.id)}
+							>
+								{s.name}
+							</button>
+						);
+					}}
+				</For>
+			</div>
+			<div style={{ display: "flex", gap: "12px", "margin-top": "16px" }}>
 				<input
 					type="text"
 					placeholder="スポットを検索..."
