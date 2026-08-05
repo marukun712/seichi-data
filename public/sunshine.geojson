@@ -27,6 +27,21 @@
       "properties": {
         "title": "八幡坂"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          138.887563,
+          35.034938
+        ]
+      },
+      "properties": {
+        "title": "淡島遊歩トンネル",
+        "description": "ラブライブ！サンシャイン!!2期10話「シャイニーを探して」",
+        "image": "images/ce802ba9-f47a-4d01-b3e9-21633b066605.jpg"
+      }
     }
   ]
 }
