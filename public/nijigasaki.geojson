@@ -15,6 +15,21 @@
         "description": "映画『虹ヶ咲学園スクールアイドル同好会 完結編第2章』「Circle of Love」より",
         "image": "images/bdf115b6-1136-4eb8-a7ec-0066ad6a3d12.jpg"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.757313,
+          34.985937
+        ]
+      },
+      "properties": {
+        "title": "大空広場",
+        "description": "えいがさき第2章で、せつ菜(菜々)がファンと交流しているシーンに登場",
+        "image": "images/687bcd4e-c5c3-4629-99b1-6d70811729bd.jpg"
+      }
     }
   ]
 }
