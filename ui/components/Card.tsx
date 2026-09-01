@@ -14,8 +14,7 @@ const Card = (props: Props) => {
 				position: "fixed",
 				top: "16px",
 				right: "16px",
-				width: "320px",
-				"max-width": "calc(100vw - 32px)",
+				"max-width": "128px",
 				"z-index": 1,
 			}}
 		>
