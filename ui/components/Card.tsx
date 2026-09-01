@@ -9,7 +9,14 @@ interface Props {
 
 const Card = (props: Props) => {
 	return (
-		<article>
+		<article
+			style={{
+				position: "fixed",
+				top: "16px",
+				right: "16px",
+				"z-index": 1,
+			}}
+		>
 			<button type="button" onClick={props.onClose} aria-label="閉じる">
 				<X />
 			</button>

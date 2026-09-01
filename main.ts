@@ -33,6 +33,8 @@ export interface Env {
 	GITHUB_REPO_NAME: string;
 }
 
+// APIInteractionは複数の種類のInteractionを合わせたUnion型なので、
+// スラッシュコマンド用の処理に進む前に型を絞り込む必要がある
 function isChatInputCommand(
 	interaction: APIInteraction,
 ): interaction is APIChatInputApplicationCommandInteraction {
@@ -46,6 +48,8 @@ async function handleSpotCommand(
 	interaction: APIChatInputApplicationCommandInteraction,
 	env: Env,
 ): Promise<void> {
+	// Discordはインタラクションへの応答を3秒以内に返す必要があるため、
+	// 先にDeferredで応答しておき、後からこの関数で結果を編集して伝える
 	const followUp = async (content: string) => {
 		await fetch(
 			`https://discord.com/api/v10/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`,
@@ -87,6 +91,8 @@ async function handleSpotCommand(
 
 		const { series, title, plusCode, description, imageOptionId } = parsed.data;
 
+		// 短縮形の場所コードは基準位置がないと座標に変換できないため、
+		// "+"が9文字目にあるフル桁の場所コードのみ受け付ける
 		if (plusCode.indexOf("+") !== 8) {
 			await followUp("フルの場所コードを入力してください");
 			return;
@@ -95,6 +101,7 @@ async function handleSpotCommand(
 		const user = interaction.member?.user ?? interaction.user;
 		if (!user) throw new Error("No user in interaction");
 
+		// 参加直後のアカウントによる荒らし投稿を防ぐための制限
 		const isEligible = await checkMemberAge(user.id, env);
 		if (!isEligible) {
 			await followUp(
@@ -173,6 +180,8 @@ export default {
 		}
 
 		if (isChatInputCommand(interaction)) {
+			// GitHub PR作成などの処理は3秒のDiscord応答期限に収まらない可能性があるため、
+			// 先にDeferredを返してからwaitUntilでWorkerを終了させずに処理を継続する
 			ctx.waitUntil(handleSpotCommand(interaction, env).catch(console.error));
 
 			return new Response(

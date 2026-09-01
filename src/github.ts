@@ -6,6 +6,9 @@ import type { Env } from "../main.ts";
 import { getEnv } from "./env.ts";
 import { type Feature, geoJSONSchema, type SpotData } from "./schema.ts";
 
+// GitHub Appの秘密鍵はPKCS1形式で発行されるが、
+// JWT署名に使うWebCryptoのSubtleCryptoはPKCS1形式の鍵を扱えないため、
+// createAppAuthに渡す前にPKCS8形式へ変換しておく必要がある
 function toP8Pem(pem: string): string {
 	if (!pem.includes("BEGIN RSA PRIVATE KEY")) return pem;
 	return createPrivateKey(pem).export({

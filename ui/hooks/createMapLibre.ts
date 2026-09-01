@@ -1,0 +1,120 @@
+import * as maplibregl from "maplibre-gl";
+import { createEffect, createSignal, onMount } from "solid-js";
+import type { FeatureView } from "../../src/schema.ts";
+
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+
+interface Params {
+	features: () => FeatureView[];
+	selected: () => FeatureView | null;
+	seriesColor: () => string | null;
+	onFeatureClick: (feature: FeatureView) => void;
+}
+
+export function createMapLibre(params: Params) {
+	const [loaded, setLoaded] = createSignal(false);
+
+	let map: maplibregl.Map | undefined;
+	let markers: maplibregl.Marker[] = [];
+
+	function clearMarkers() {
+		for (const marker of markers) {
+			marker.remove();
+		}
+		markers = [];
+	}
+
+	function addMarkers(features: FeatureView[]) {
+		if (!map) return;
+
+		for (const feature of features) {
+			const color = feature.properties.series.color;
+			const [lng, lat] = feature.geometry.coordinates;
+
+			const marker = new maplibregl.Marker({ color })
+				.setLngLat([lng, lat])
+				.addTo(map);
+
+			marker.getElement().style.cursor = "pointer";
+			marker.getElement().addEventListener("click", () => {
+				params.onFeatureClick(feature);
+			});
+
+			markers.push(marker);
+		}
+	}
+
+	function setColor(color: string | null) {
+		if (!map) return;
+
+		const layers = map.getStyle().layers;
+
+		layers.forEach((layer) => {
+			if (!map) return;
+			const id = layer.id;
+
+			if (/^(road|tunnel|bridge)_/.test(id) && layer.type === "line") {
+				map.setPaintProperty(id, "line-color", color ?? "#e40081");
+				map.setPaintProperty(id, "line-opacity", 0.05);
+			}
+
+			if (id.startsWith("building")) {
+				const colorProp =
+					layer.type === "fill-extrusion"
+						? "fill-extrusion-color"
+						: "fill-color";
+				const opacityProp =
+					layer.type === "fill-extrusion"
+						? "fill-extrusion-opacity"
+						: "fill-opacity";
+				map.setPaintProperty(id, colorProp, color ?? "#e40081");
+				map.setPaintProperty(id, opacityProp, 0.5);
+			}
+		});
+	}
+
+	let container: HTMLDivElement | undefined;
+	const setContainer = (el: HTMLDivElement) => {
+		container = el;
+	};
+
+	onMount(() => {
+		if (!container) return;
+		maplibregl.setWorkerUrl(
+			"https://esm.sh/maplibre-gl@6.0.0/dist/maplibre-gl-worker.mjs",
+		);
+		map = new maplibregl.Map({
+			container,
+			style: MAP_STYLE,
+			center: [137.5, 36.5],
+			zoom: 5,
+		});
+		map.on("load", () => {
+			addMarkers(params.features());
+			setColor(params.seriesColor());
+			setLoaded(true);
+		});
+	});
+
+	createEffect(() => {
+		const features = params.features();
+		if (!loaded()) return;
+		clearMarkers();
+		addMarkers(features);
+	});
+
+	createEffect(() => {
+		const color = params.seriesColor();
+		if (!loaded()) return;
+		setColor(color);
+	});
+
+	createEffect(() => {
+		const f = params.selected();
+		if (!f || !map) return;
+		const [lng, lat] = f.geometry.coordinates;
+		map.flyTo({ center: [lng, lat], zoom: 15 });
+	});
+
+	return { setContainer };
+}

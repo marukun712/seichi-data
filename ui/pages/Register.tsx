@@ -1,131 +1,60 @@
-import { A } from "@solidjs/router";
-import * as maplibregl from "maplibre-gl";
-import { encode } from "pluscodes";
 import { type Component, createSignal, onMount } from "solid-js";
-import { z } from "zod";
-
-declare global {
-	interface Window {
-		twttr?: { widgets: { load: () => void } };
-	}
-}
-
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
-
-const nominatimSchema = z.array(
-	z.object({
-		lat: z.string(),
-		lon: z.string(),
-		display_name: z.string(),
-	}),
-);
+import { createClipboardCopy } from "../hooks/createClipboardCopy.ts";
+import { createPlusCodePicker } from "../hooks/createPlusCodePicker.ts";
+import { searchLocation } from "../utils/geocode.ts";
+import { loadTwitterWidgets } from "../utils/twitter.ts";
 
 const PluscodeMap = () => {
-	let container: HTMLDivElement | undefined;
-	let map: maplibregl.Map | undefined;
-	let marker: maplibregl.Marker | undefined;
-
-	const [plusCode, setPlusCode] = createSignal<string | null>(null);
-	const [copied, setCopied] = createSignal(false);
+	const { plusCode, setContainer, flyTo } = createPlusCodePicker();
+	const { copied, copy } = createClipboardCopy();
 	const [query, setQuery] = createSignal("");
-
-	onMount(() => {
-		if (!container) return;
-		maplibregl.setWorkerUrl(
-			"https://esm.sh/maplibre-gl@6.0.0/dist/maplibre-gl-worker.mjs",
-		);
-		map = new maplibregl.Map({
-			container,
-			style: MAP_STYLE,
-			center: [137.5, 36.5],
-			zoom: 5,
-		});
-		map.on("click", (e) => {
-			const { lat, lng } = e.lngLat;
-			const code = encode({ latitude: lat, longitude: lng }, 10);
-			if (!code) return;
-			setPlusCode(code);
-
-			marker?.remove();
-			marker = new maplibregl.Marker()
-				.setLngLat([lng, lat])
-				.addTo(map as maplibregl.Map);
-		});
-	});
 
 	const search = async () => {
 		const q = query().trim();
 		if (!q) return;
-		const res = await fetch(
-			`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-				q,
-			)}&format=json&limit=1`,
-		);
-		const results = nominatimSchema.parse(await res.json());
-		if (results.length === 0) return;
-		const { lat, lon } = results[0];
-		map?.flyTo({ center: [Number(lon), Number(lat)], zoom: 15 });
+		const location = await searchLocation(q);
+		if (!location) return;
+		flyTo(location.lat, location.lon);
 	};
 
-	const copy = async () => {
+	const copyPlusCode = () => {
 		const code = plusCode();
 		if (!code) return;
-		await navigator.clipboard.writeText(code);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
+		copy(code);
 	};
 
 	return (
 		<div>
-			<div style={{ display: "flex", gap: "8px" }}>
-				<input
-					type="text"
-					placeholder="場所を検索..."
-					value={query()}
-					style={{ width: "auto", flex: 1 }}
-					onInput={(e) => setQuery(e.currentTarget.value)}
-					onKeyDown={(e) => e.key === "Enter" && search()}
-				/>
-				<button type="button" onClick={search}>
-					検索
-				</button>
-			</div>
-			<div ref={container} class="map-container" />
-			<div
-				style={{
-					display: "flex",
-					gap: "8px",
-				}}
-			>
-				<input
-					type="text"
-					readonly
-					style={{ width: "auto", flex: 1 }}
-					value={plusCode() ?? "地図をクリックして取得"}
-				/>
-				<button type="button" onClick={copy} disabled={!plusCode()}>
-					{copied() ? "コピーしました" : "コピー"}
-				</button>
-			</div>
+			<input
+				type="text"
+				placeholder="場所を検索..."
+				value={query()}
+				onInput={(e) => setQuery(e.currentTarget.value)}
+				onKeyDown={(e) => e.key === "Enter" && search()}
+			/>
+			<button type="button" onClick={search}>
+				検索
+			</button>
+			<input
+				type="text"
+				readonly
+				value={plusCode() ?? "地図をクリックして取得"}
+			/>
+			<button type="button" onClick={copyPlusCode} disabled={!plusCode()}>
+				{copied() ? "コピーしました" : "コピー"}
+			</button>
+			<div ref={setContainer} style={{ height: "50vh" }} />
 		</div>
 	);
 };
 
 const Register: Component = () => {
 	onMount(() => {
-		if (globalThis.window.twttr) {
-			globalThis.window.twttr.widgets.load();
-			return;
-		}
-		const script = document.createElement("script");
-		script.src = "https://platform.x.com/widgets.js";
-		script.async = true;
-		document.body.appendChild(script);
+		loadTwitterWidgets();
 	});
 
 	return (
-		<main>
-			<A href="/">← 地図に戻る</A>
+		<main class="container" style={{ "margin-top": "6vh" }}>
 			<h2>聖地情報の登録方法</h2>
 			<p>
 				聖地情報を登録するためには、ラブライブ！学会オープンサーバーに参加する必要があります。

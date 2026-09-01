@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Env } from "../main.ts";
 import { getEnv } from "./env.ts";
 
+// Discord側の発行した署名を検証
 export async function verifyDiscordSignature(
 	req: Request,
 	env: Env,
@@ -40,5 +41,6 @@ export async function checkMemberAge(
 	const joinedAt = new Date(member.data.joined_at).getTime();
 	const daysSinceJoin = (Date.now() - joinedAt) / (1000 * 60 * 60 * 24);
 
+	// オープンサーバー参加から3日経過していることを確認する(スパム防止)
 	return daysSinceJoin >= 3;
 }

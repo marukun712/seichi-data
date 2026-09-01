@@ -1,8 +1,5 @@
-import * as maplibregl from "maplibre-gl";
-import { createEffect, createSignal, onMount } from "solid-js";
 import type { FeatureView } from "../../src/schema.ts";
-
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+import { createMapLibre } from "../hooks/createMapLibre.ts";
 
 interface Props {
 	features: FeatureView[];
@@ -12,107 +9,14 @@ interface Props {
 }
 
 const MapView = (props: Props) => {
-	const [loaded, setLoaded] = createSignal(false);
-
-	let container: HTMLDivElement | undefined;
-	let map: maplibregl.Map | undefined;
-	let markers: maplibregl.Marker[] = [];
-
-	function clearMarkers() {
-		for (const marker of markers) {
-			marker.remove();
-		}
-		markers = [];
-	}
-
-	function addMarkers(features: FeatureView[]) {
-		if (!map) return;
-
-		for (const feature of features) {
-			const color = feature.properties.series.color;
-			const [lng, lat] = feature.geometry.coordinates;
-
-			const marker = new maplibregl.Marker({ color })
-				.setLngLat([lng, lat])
-				.addTo(map);
-
-			marker.getElement().style.cursor = "pointer";
-			marker.getElement().addEventListener("click", () => {
-				props.onFeatureClick(feature);
-			});
-
-			markers.push(marker);
-		}
-	}
-
-	function setColor(color: string | null) {
-		if (!map) return;
-
-		const layers = map.getStyle().layers;
-
-		layers.forEach((layer) => {
-			if (!map) return;
-			const id = layer.id;
-
-			if (/^(road|tunnel|bridge)_/.test(id) && layer.type === "line") {
-				map.setPaintProperty(id, "line-color", color ?? "#e40081");
-				map.setPaintProperty(id, "line-opacity", 0.05);
-			}
-
-			if (id.startsWith("building")) {
-				const colorProp =
-					layer.type === "fill-extrusion"
-						? "fill-extrusion-color"
-						: "fill-color";
-				const opacityProp =
-					layer.type === "fill-extrusion"
-						? "fill-extrusion-opacity"
-						: "fill-opacity";
-				map.setPaintProperty(id, colorProp, color ?? "#e40081");
-				map.setPaintProperty(id, opacityProp, 0.5);
-			}
-		});
-	}
-
-	onMount(() => {
-		if (!container) return;
-		maplibregl.setWorkerUrl(
-			"https://esm.sh/maplibre-gl@6.0.0/dist/maplibre-gl-worker.mjs",
-		);
-		map = new maplibregl.Map({
-			container,
-			style: MAP_STYLE,
-			center: [137.5, 36.5],
-			zoom: 5,
-		});
-		map.on("load", () => {
-			addMarkers(props.features);
-			setColor(props.seriesColor);
-			setLoaded(true);
-		});
+	const { setContainer } = createMapLibre({
+		features: () => props.features,
+		selected: () => props.selected,
+		seriesColor: () => props.seriesColor,
+		onFeatureClick: props.onFeatureClick,
 	});
 
-	createEffect(() => {
-		const features = props.features;
-		if (!loaded()) return;
-		clearMarkers();
-		addMarkers(features);
-	});
-
-	createEffect(() => {
-		const color = props.seriesColor;
-		if (!loaded()) return;
-		setColor(color);
-	});
-
-	createEffect(() => {
-		const f = props.selected;
-		if (!f || !map) return;
-		const [lng, lat] = f.geometry.coordinates;
-		map.flyTo({ center: [lng, lat], zoom: 15 });
-	});
-
-	return <div ref={container} class="map-container" />;
+	return <div ref={setContainer} style={{ position: "fixed", inset: 0 }} />;
 };
 
 export default MapView;

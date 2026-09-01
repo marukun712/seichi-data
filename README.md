@@ -66,6 +66,8 @@ deno task register
 ### 5. 開発サーバーの起動
 
 ```sh
+deno i
+deno task build
 deno task dev
 ```
 
