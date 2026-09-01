@@ -14,6 +14,8 @@ const Card = (props: Props) => {
 				position: "fixed",
 				top: "16px",
 				right: "16px",
+				width: "320px",
+				"max-width": "calc(100vw - 32px)",
 				"z-index": 1,
 			}}
 		>
@@ -26,6 +28,7 @@ const Card = (props: Props) => {
 				<img
 					src={props.feature.properties.image}
 					alt={props.feature.properties.title}
+					style={{ width: "100%", height: "180px", "object-fit": "cover" }}
 				/>
 			</Show>
 			<Show when={props.feature.properties.description}>

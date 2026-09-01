@@ -13,6 +13,16 @@
     * {
       font-family: "Noto Sans JP", sans-serif;
     }
+
+    /* MapLibreのデフォルトマーカーはrole="button"を持ち、PicoCSSのボタンスタイルが
+       ピンの背後に当たってしまうため、その分だけ打ち消す */
+    .maplibregl-marker {
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background-color: transparent;
+      box-shadow: none;
+    }
   </style>
 </head>
 
