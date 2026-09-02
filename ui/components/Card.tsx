@@ -26,6 +26,7 @@ const Card = (props: Props) => {
 			<h3>{props.feature.properties.title}</h3>
 			<Show when={props.feature.properties.image}>
 				<img
+					style={{ width: "100%", height: "100%" }}
 					src={props.feature.properties.image}
 					alt={props.feature.properties.title}
 				/>
