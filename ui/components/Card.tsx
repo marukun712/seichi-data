@@ -27,7 +27,6 @@ const Card = (props: Props) => {
 				<img
 					src={props.feature.properties.image}
 					alt={props.feature.properties.title}
-					style={{ width: "100%", height: "180px", "object-fit": "cover" }}
 				/>
 			</Show>
 			<Show when={props.feature.properties.description}>
