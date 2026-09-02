@@ -15,6 +15,7 @@ const Card = (props: Props) => {
 				top: "16px",
 				right: "16px",
 				width: "32vw",
+				height: "50vh",
 				"z-index": 1,
 			}}
 		>
