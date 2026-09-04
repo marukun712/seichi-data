@@ -40,8 +40,7 @@
       "properties": {
         "title": "淡島遊歩トンネル",
         "description": "ラブライブ！サンシャイン!!2期10話「シャイニーを探して」",
-        "image": "images/ce802ba9-f47a-4d01-b3e9-21633b066605.jpg"
+        "image": [ "images/ce802ba9-f47a-4d01-b3e9-21633b066605.jpg" ]
       }
     }
   ]
-}
