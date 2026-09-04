@@ -39,10 +39,6 @@ const Filter = (props: Props) => {
 				right: "16px",
 				bottom: "16px",
 				"z-index": 1,
-				display: "flex",
-				"flex-wrap": "wrap",
-				gap: "16px",
-				"align-items": "center",
 			}}
 		>
 			<input
@@ -63,7 +59,14 @@ const Filter = (props: Props) => {
 			>
 				すべて
 			</button>
-			<div>
+			<div
+				style={{
+					display: "flex",
+					"flex-wrap": "wrap",
+					gap: "16px",
+					"align-items": "center",
+				}}
+			>
 				<For each={props.series}>
 					{(s) => {
 						const isActive = () => props.selectedSeries.includes(s.id);
