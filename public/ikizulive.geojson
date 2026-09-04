@@ -13,7 +13,7 @@
       "properties": {
         "title": "駒形橋",
         "description": "ツイート・LLDなどに複数回登場",
-        "image": "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg"
+        "image": [ "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg" ]
       }
     }
   ]
