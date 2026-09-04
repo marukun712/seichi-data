@@ -86,18 +86,27 @@ const Filter = (props: Props) => {
 					}}
 				</For>
 			</div>
-			<For each={props.tags}>
-				{(tag) => (
-					<label>
-						<input
-							type="checkbox"
-							checked={props.selectedTags.includes(tag)}
-							onChange={() => props.onTagToggle(tag)}
-						/>
-						{tag}
-					</label>
-				)}
-			</For>
+			<div
+				style={{
+					display: "flex",
+					"flex-wrap": "wrap",
+					gap: "16px",
+					"align-items": "center",
+				}}
+			>
+				<For each={props.tags}>
+					{(tag) => (
+						<label>
+							<input
+								type="checkbox"
+								checked={props.selectedTags.includes(tag)}
+								onChange={() => props.onTagToggle(tag)}
+							/>
+							{tag}
+						</label>
+					)}
+				</For>
+			</div>
 		</article>
 	);
 };
