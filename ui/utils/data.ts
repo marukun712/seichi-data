@@ -3,6 +3,7 @@ import {
 	featureSchema,
 	geoJSONSchema,
 	seriesJSONSchema,
+	tagsSchema,
 } from "../../src/schema.ts";
 
 export async function loadSeriesAndFeatures() {
@@ -25,4 +26,9 @@ export async function loadSeriesAndFeatures() {
 	}
 
 	return { series, features };
+}
+
+export async function loadTags() {
+	const tagsRes = await fetch("/tags.json");
+	return tagsSchema.parse(await tagsRes.json());
 }

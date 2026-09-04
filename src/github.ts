@@ -85,7 +85,10 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 		newFeature.properties.description = spot.description;
 	}
 	if (spot.imageBytes) {
-		newFeature.properties.image = `images/${uuid}.jpg`;
+		newFeature.properties.image = [`images/${uuid}.jpg`];
+	}
+	if (spot.tags.length > 0) {
+		newFeature.properties.tags = spot.tags;
 	}
 
 	geojson.features.push(newFeature);
@@ -116,6 +119,7 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 - シリーズ: ${spot.series.name}
 - 施設名: ${spot.title}
 - 座標: ${spot.lat}, ${spot.lng}
+- タグ: ${spot.tags.length > 0 ? spot.tags.join(", ") : "(なし)"}
 - 投稿者: ${spot.discordUsername} (${spot.discordUserId})
 - 投稿日時: ${new Date().toISOString()}
 

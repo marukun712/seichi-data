@@ -5,9 +5,12 @@ import { createFeatureSearch } from "../hooks/createFeatureSearch.ts";
 interface Props {
 	series: Series[];
 	selectedSeries: string[];
+	tags: string[];
+	selectedTags: string[];
 	features: FeatureView[];
 	onSeriesToggle: (id: string) => void;
 	onSeriesClear: () => void;
+	onTagToggle: (tag: string) => void;
 	onFeatureSelect: (f: Feature) => void;
 }
 
@@ -60,23 +63,37 @@ const Filter = (props: Props) => {
 			>
 				すべて
 			</button>
-			<For each={props.series}>
-				{(s) => {
-					const isActive = () => props.selectedSeries.includes(s.id);
-					return (
-						<button
-							type="button"
-							style={
-								isActive()
-									? { background: s.color, "border-color": s.color }
-									: inactiveStyle
-							}
-							onClick={() => props.onSeriesToggle(s.id)}
-						>
-							{s.name}
-						</button>
-					);
-				}}
+			<div>
+				<For each={props.series}>
+					{(s) => {
+						const isActive = () => props.selectedSeries.includes(s.id);
+						return (
+							<button
+								type="button"
+								style={
+									isActive()
+										? { background: s.color, "border-color": s.color }
+										: inactiveStyle
+								}
+								onClick={() => props.onSeriesToggle(s.id)}
+							>
+								{s.name}
+							</button>
+						);
+					}}
+				</For>
+			</div>
+			<For each={props.tags}>
+				{(tag) => (
+					<label>
+						<input
+							type="checkbox"
+							checked={props.selectedTags.includes(tag)}
+							onChange={() => props.onTagToggle(tag)}
+						/>
+						{tag}
+					</label>
+				)}
 			</For>
 		</article>
 	);

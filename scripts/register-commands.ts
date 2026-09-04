@@ -43,6 +43,13 @@ const command = new SlashCommandBuilder()
 	)
 	.addAttachmentOption((option) =>
 		option.setName("image").setDescription("画像").setRequired(false),
+	)
+	.addStringOption((option) =>
+		option
+			.setName("tags")
+			.setDescription("タグをカンマ区切りで入力(入力中に候補が表示されます)")
+			.setRequired(false)
+			.setAutocomplete(true),
 	);
 
 const rest = new REST().setToken(getEnv("DISCORD_BOT_TOKEN"));

@@ -107,6 +107,10 @@ const Register: Component = () => {
 				<li>
 					<strong>image</strong>: 画像(任意、5MB以下)
 				</li>
+				<li>
+					<strong>tags</strong>:
+					タグ(任意、カンマ区切りで複数入力可。入力中に候補が表示されます)
+				</li>
 			</ul>
 		</main>
 	);

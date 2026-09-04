@@ -7,20 +7,29 @@ import Filter from "./components/Filter.tsx";
 import MapView from "./components/MapView.tsx";
 import { createSpotFilter } from "./hooks/createSpotFilter.ts";
 import Register from "./pages/Register.tsx";
-import { loadSeriesAndFeatures } from "./utils/data.ts";
+import { loadSeriesAndFeatures, loadTags } from "./utils/data.ts";
 
 const Home = () => {
 	const [series, setSeries] = createSignal<Series[]>([]);
+	const [tags, setTags] = createSignal<string[]>([]);
 	const [allFeatures, setAllFeatures] = createSignal<FeatureView[]>([]);
 	const [selected, setSelected] = createSignal<FeatureView | null>(null);
 
-	const { selectedSeries, filtered, seriesColor, toggleSeries, clearSeries } =
-		createSpotFilter({ series, allFeatures });
+	const {
+		selectedSeries,
+		selectedTags,
+		filtered,
+		seriesColor,
+		toggleSeries,
+		clearSeries,
+		toggleTag,
+	} = createSpotFilter({ series, allFeatures });
 
 	onMount(async () => {
 		const { series, features } = await loadSeriesAndFeatures();
 		setSeries(series);
 		setAllFeatures(features);
+		setTags(await loadTags());
 	});
 
 	return (
@@ -37,9 +46,12 @@ const Home = () => {
 			<Filter
 				series={series()}
 				selectedSeries={selectedSeries()}
+				tags={tags()}
+				selectedTags={selectedTags()}
 				features={filtered()}
 				onSeriesToggle={toggleSeries}
 				onSeriesClear={clearSeries}
+				onTagToggle={toggleTag}
 				onFeatureSelect={setSelected}
 			/>
 			<Show when={selected()}>
