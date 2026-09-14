@@ -19,6 +19,7 @@ export async function loadSeriesAndFeatures() {
 			if (!parsed.success) continue;
 			features.push({
 				type: "Feature",
+				id: parsed.data.id,
 				geometry: parsed.data.geometry,
 				properties: { ...parsed.data.properties, series: s },
 			});

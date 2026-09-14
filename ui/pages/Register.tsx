@@ -3,6 +3,8 @@ import { createClipboardCopy } from "../hooks/createClipboardCopy.ts";
 import { createPlusCodePicker } from "../hooks/createPlusCodePicker.ts";
 import { searchLocation } from "../utils/geocode.ts";
 import { loadTwitterWidgets } from "../utils/twitter.ts";
+import "./Register.css";
+import { Search } from "lucide-solid/icons";
 
 const PluscodeMap = () => {
 	const { plusCode, setContainer, flyTo } = createPlusCodePicker();
@@ -33,6 +35,7 @@ const PluscodeMap = () => {
 				onKeyDown={(e) => e.key === "Enter" && search()}
 			/>
 			<button type="button" onClick={search}>
+				<Search />
 				検索
 			</button>
 			<input
@@ -43,7 +46,7 @@ const PluscodeMap = () => {
 			<button type="button" onClick={copyPlusCode} disabled={!plusCode()}>
 				{copied() ? "コピーしました" : "コピー"}
 			</button>
-			<div ref={setContainer} style={{ height: "50vh" }} />
+			<div ref={setContainer} class="pluscode-map" />
 		</div>
 	);
 };
@@ -54,7 +57,7 @@ const Register: Component = () => {
 	});
 
 	return (
-		<main class="container" style={{ "margin-top": "6vh" }}>
+		<main class="container register-main">
 			<h2>聖地情報の登録方法</h2>
 			<p>
 				聖地情報を登録するためには、ラブライブ！学会オープンサーバーに参加する必要があります。

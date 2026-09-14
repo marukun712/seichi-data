@@ -1,0 +1,11 @@
+.about-panel {
+	position: fixed;
+	top: 16px;
+	left: 16px;
+}
+
+@media (max-width: 640px) {
+	.about-panel {
+		right: 16px;
+	}
+}

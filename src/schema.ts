@@ -19,6 +19,7 @@ export const seriesJSONSchema = z.object({ series: z.array(seriesSchema) });
 
 export const featureSchema = z.object({
 	type: z.literal("Feature"),
+	id: z.string(),
 	geometry: z.object({
 		type: z.literal("Point"),
 		coordinates: z.array(z.number()).length(2),

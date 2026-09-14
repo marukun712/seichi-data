@@ -72,6 +72,7 @@ export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
 
 	const newFeature: Feature = {
 		type: "Feature",
+		id: uuid,
 		geometry: {
 			type: "Point",
 			coordinates: [spot.lng, spot.lat],

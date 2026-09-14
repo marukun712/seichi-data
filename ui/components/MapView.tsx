@@ -1,5 +1,6 @@
 import type { FeatureView } from "../../src/schema.ts";
 import { createMapLibre } from "../hooks/createMapLibre.ts";
+import "./MapView.css";
 
 interface Props {
 	features: FeatureView[];
@@ -16,7 +17,7 @@ const MapView = (props: Props) => {
 		onFeatureClick: props.onFeatureClick,
 	});
 
-	return <div ref={setContainer} style={{ position: "fixed", inset: 0 }} />;
+	return <div ref={setContainer} class="map-view" />;
 };
 
 export default MapView;

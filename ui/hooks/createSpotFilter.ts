@@ -11,11 +11,11 @@ export function createSpotFilter(params: Params) {
 	const [selectedTags, setSelectedTags] = createSignal<string[]>([]);
 
 	const filtered = (): FeatureView[] => {
-		const ids = selectedSeries();
+		const series = selectedSeries();
 		const tags = selectedTags();
 		return params.allFeatures().filter((f) => {
 			const matchesSeries =
-				ids.length === 0 || ids.includes(f.properties.series.id);
+				series.length === 0 || series.includes(f.properties.series.id);
 			const featureTags = f.properties.tags ?? [];
 			const matchesTags =
 				tags.length === 0 || tags.some((t) => featureTags.includes(t));
@@ -24,9 +24,9 @@ export function createSpotFilter(params: Params) {
 	};
 
 	const seriesColor = (): string | null => {
-		const ids = selectedSeries();
-		if (ids.length !== 1) return null;
-		return params.series().find((s) => s.id === ids[0])?.color ?? null;
+		const series = selectedSeries();
+		if (series.length !== 1) return null;
+		return params.series().find((s) => s.id === series[0])?.color ?? null;
 	};
 
 	const toggleSeries = (id: string) => {
