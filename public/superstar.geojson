@@ -1,4 +1,26 @@
 {
-	"type": "FeatureCollection",
-	"features": []
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "5d015ccd-3842-4ece-bd66-6c9acbae0d12",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.704188,
+          35.667313
+        ]
+      },
+      "properties": {
+        "title": "クレープとエスプレッソとジェラ―トと",
+        "description": "TVアニメ3期3話や2期EDで登場した場所",
+        "image": [
+          "images/5d015ccd-3842-4ece-bd66-6c9acbae0d12.jpg"
+        ],
+        "tags": [
+          "アニメ"
+        ]
+      }
+    }
+  ]
 }
