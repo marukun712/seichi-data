@@ -3,6 +3,7 @@ import {
 	makeAttachmentOption,
 	makeSlashCommand,
 	makeStringOption,
+	register,
 } from "discord-hono";
 import { Hono } from "hono";
 import { decode } from "pluscodes";
@@ -190,7 +191,31 @@ const bot = new DiscordHono<Env>().autocomplete(
 		}),
 );
 
+let registerPromise: Promise<void> | null = null;
+
+function ensureCommandsRegistered(env: Bindings) {
+	if (!registerPromise) {
+		registerPromise = register(
+			[spotCommand],
+			env.DISCORD_APPLICATION_ID,
+			env.DISCORD_TOKEN,
+			env.DISCORD_GUILD_ID,
+		)
+			.then(() => {})
+			.catch((err) => {
+				registerPromise = null;
+				console.error("Failed to register commands:", err);
+			});
+	}
+	return registerPromise;
+}
+
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use("*", async (c, next) => {
+	await ensureCommandsRegistered(c.env);
+	await next();
+});
 
 app.get("/api/geocode", async (c) => {
 	const q = c.req.query("q");

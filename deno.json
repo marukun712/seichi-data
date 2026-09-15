@@ -3,7 +3,6 @@
 	"exclude": [".wrangler"],
 	"tasks": {
 		"dev": "wrangler dev",
-		"register": "deno run --allow-net --allow-env --allow-read --env scripts/register-commands.ts",
 		"check": "deno check && dx biome check .",
 		"check:unsafe": "deno check && dx biome check --write --unsafe .",
 		"build": "dx vite build"
