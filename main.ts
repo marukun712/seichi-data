@@ -61,134 +61,102 @@ export const spotCommand = makeSlashCommand("spot", "聖地を投稿します").
 	[
 		makeStringOption("series", "シリーズ")
 			.required(true)
-			.choices(seriesJson.series.map((s) => ({ name: s.id, value: s.id }))),
+			.choices(allSeries.map((s) => ({ name: s.name, value: s.id }))),
 		makeStringOption("title", "場所の名前を入力").required(true),
 		makeStringOption("pluscode", "場所コードを入力").required(true),
 		makeStringOption("description", "場所の説明を入力"),
-		makeStringOption("tags", "タグをカンマ区切りで入力").autocomplete(true),
+		makeStringOption("tags", "タグ").choices(
+			allTags.map((tag) => ({ name: tag, value: tag })),
+		),
 		makeAttachmentOption("image", "画像 (5MBまで)"),
 	],
 );
 
-function buildTagAutocompleteChoices(
-	rawValue: string,
-): { name: string; value: string }[] {
-	const segments = rawValue.split(",").map((s) => s.trim());
-	// 補完対象は最後のタグ
-	const currentSegment = segments[segments.length - 1] ?? "";
-	const confirmedTags = segments.slice(0, -1).filter((s) => s.length > 0);
+const bot = new DiscordHono<Env>().command("spot", (c) =>
+	c.resDefer(async (c) => {
+		try {
+			const parsed = spotInputSchema.safeParse({
+				series: c.var.series,
+				title: c.var.title,
+				plusCode: c.var.pluscode,
+				description: c.var.description ?? null,
+				tags: c.var.tags ?? null,
+				image: c.var.image ?? null,
+			});
 
-	return allTags
-		.filter(
-			(tag) => tag.startsWith(currentSegment) && !confirmedTags.includes(tag),
-		)
-		.map((tag) => {
-			const value = `${[...confirmedTags, tag].join(",")},`;
-			return { name: value, value };
-		});
-}
+			if (!parsed.success) {
+				await c.followup("入力内容が不正です。もう一度お試しください。");
+				return;
+			}
 
-const bot = new DiscordHono<Env>().autocomplete(
-	"spot",
-	(c) =>
-		c.resAutocomplete(
-			c.focused
-				? buildTagAutocompleteChoices(String(c.focused.value ?? ""))
-				: [],
-		),
-	(c) =>
-		c.flags("EPHEMERAL").resDefer(async (c) => {
-			try {
-				const parsed = spotInputSchema.safeParse({
-					series: c.var.series,
-					title: c.var.title,
-					plusCode: c.var.pluscode,
-					description: c.var.description ?? null,
-					tags: c.var.tags ?? null,
-					image: c.var.image ?? null,
-				});
+			const { series, title, plusCode, description, tags, image } = parsed.data;
 
-				if (!parsed.success) {
-					await c.followup("入力内容が不正です。もう一度お試しください。");
-					return;
-				}
+			const selectedTags = tags && allTags.includes(tags) ? [tags] : [];
 
-				const { series, title, plusCode, description, tags, image } =
-					parsed.data;
+			const seriesData = getSeries(series);
+			if (!seriesData) {
+				await c.followup("不正なシリーズです");
+				return;
+			}
 
-				const selectedTags = [
-					...new Set(
-						(tags ?? "")
-							.split(",")
-							.map((t) => t.trim())
-							.filter((t) => allTags.includes(t)),
-					),
-				];
+			if (plusCode.indexOf("+") !== 8) {
+				await c.followup("フルの場所コードを入力してください");
+				return;
+			}
 
-				const seriesData = getSeries(series);
-				if (!seriesData) {
-					await c.followup("不正なシリーズです");
-					return;
-				}
+			const user = c.interaction.member?.user ?? c.interaction.user;
+			if (!user) throw new Error("No user in interaction");
 
-				if (plusCode.indexOf("+") !== 8) {
-					await c.followup("フルの場所コードを入力してください");
-					return;
-				}
+			const isEligible = await checkMemberAge(user.id, c.env);
+			if (!isEligible) {
+				await c.followup(
+					"投稿にはサーバー参加から3日以上経過している必要があります。",
+				);
+				return;
+			}
 
-				const user = c.interaction.member?.user ?? c.interaction.user;
-				if (!user) throw new Error("No user in interaction");
+			const coords = decode(plusCode);
+			if (!coords) {
+				await c.followup("場所コードから座標を取得できませんでした。");
+				return;
+			}
 
-				const isEligible = await checkMemberAge(user.id, c.env);
-				if (!isEligible) {
+			let imageBytes: Uint8Array | null = null;
+
+			if (image) {
+				const attachment = c.ref.attachments?.[image];
+				if (attachment && attachment.size > 5 * 1024 * 1024) {
 					await c.followup(
-						"投稿にはサーバー参加から3日以上経過している必要があります。",
+						"画像が大きすぎます。5MB以下の画像を使用してください。",
 					);
 					return;
 				}
-
-				const coords = decode(plusCode);
-				if (!coords) {
-					await c.followup("場所コードから座標を取得できませんでした。");
-					return;
-				}
-
-				let imageBytes: Uint8Array | null = null;
-
-				if (image) {
-					const attachment = c.ref.attachments?.[image];
-					if (attachment && attachment.size > 5 * 1024 * 1024) {
-						await c.followup(
-							"画像が大きすぎます。5MB以下の画像を使用してください。",
-						);
-						return;
-					}
-					if (attachment) imageBytes = await fetchImage(attachment.url);
-				}
-
-				const prUrl = await createSpotPR(
-					{
-						series: seriesData,
-						title,
-						lat: coords.latitude,
-						lng: coords.longitude,
-						description,
-						imageBytes,
-						tags: selectedTags,
-						discordUsername: user.username,
-						discordUserId: user.id,
-					},
-					c.env,
-				);
-
-				await c.followup(
-					`投稿を受け付けました。レビュー後にマップへ反映されます。\nPR: ${prUrl}`,
-				);
-			} catch (err) {
-				console.error(err);
-				await c.followup("処理中にエラーが発生しました。").catch(console.error);
+				if (attachment) imageBytes = await fetchImage(attachment.url);
 			}
-		}),
+
+			const prUrl = await createSpotPR(
+				{
+					series: seriesData,
+					title,
+					lat: coords.latitude,
+					lng: coords.longitude,
+					description,
+					imageBytes,
+					tags: selectedTags,
+					discordUsername: user.username,
+					discordUserId: user.id,
+				},
+				c.env,
+			);
+
+			await c.followup(
+				`投稿を受け付けました。レビュー後にマップへ反映されます。\nPR: ${prUrl}`,
+			);
+		} catch (err) {
+			console.error(err);
+			await c.followup("処理中にエラーが発生しました。").catch(console.error);
+		}
+	}),
 );
 
 let registerPromise: Promise<void> | null = null;
