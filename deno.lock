@@ -3,6 +3,7 @@
   "specifiers": {
     "npm:@biomejs/biome@*": "2.5.6",
     "npm:@biomejs/biome@^2.5.6": "2.5.6",
+    "npm:@cf-wasm/photon@0.4": "0.4.0",
     "npm:@cloudflare/workers-types@^5.20260728.1": "5.20260728.1",
     "npm:@octokit/auth-app@^8.2.0": "8.2.0",
     "npm:@solidjs/router@1": "1.0.0_solid-js@1.9.14",
@@ -216,6 +217,15 @@
       "integrity": "sha512-WN05KwXnTO/2J45RQPvzZMXf7tZUIofHoR35xIPfCo7pQ2RFidxI8sfb5mGsaTxdMmEOzHzOPRCdA5/fCpc7xQ==",
       "os": ["win32"],
       "cpu": ["x64"]
+    },
+    "@cf-wasm/internals@0.2.0": {
+      "integrity": "sha512-QwMNETkTCtrx0uCzjJPRCTyok0OZNvOry9alfG8a8TpHo7oPJ17htPMDG4ptudpwe9F0VtJHy9+nOzJmupteiQ=="
+    },
+    "@cf-wasm/photon@0.4.0": {
+      "integrity": "sha512-PQcN6sThZAR/V6SH2MQmeFndDDhGfOxvra6UStyaBbkDHrgTPKvB+WapAhh0/TA9LsRAUaX/rEEw6hvY9uphbQ==",
+      "dependencies": [
+        "@cf-wasm/internals"
+      ]
     },
     "@cloudflare/workers-types@5.20260728.1": {
       "integrity": "sha512-rZqmesLEH40Xt67PpQSj+iJqwkYBzVr7U/UOa5twkToMsxO5pYsPw2QAaTKDdiCSiki9fWAgsWTj9OmFnbwLRQ=="
@@ -1366,6 +1376,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@biomejs/biome@^2.5.6",
+        "npm:@cf-wasm/photon@0.4",
         "npm:@cloudflare/workers-types@^5.20260728.1",
         "npm:@octokit/auth-app@^8.2.0",
         "npm:@solidjs/router@1",

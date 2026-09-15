@@ -3,6 +3,7 @@
 	"private": true,
 	"type": "module",
 	"dependencies": {
+		"@cf-wasm/photon": "^0.4.0",
 		"@cloudflare/workers-types": "^5.20260728.1",
 		"@octokit/auth-app": "^8.2.0",
 		"@solidjs/router": "^1.0.0",

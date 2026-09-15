@@ -125,6 +125,7 @@ const bot = new DiscordHono<Env>().command("spot", (c) =>
 
 			if (image) {
 				const attachment = c.ref.attachments?.[image];
+				// 5MB以上だとfetch・jpgへのconvertに時間がかかってコケる
 				if (attachment && attachment.size > 5 * 1024 * 1024) {
 					await c.followup(
 						"画像が大きすぎます。5MB以下の画像を使用してください。",
