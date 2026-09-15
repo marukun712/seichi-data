@@ -28,7 +28,7 @@ const Card = (props: Props) => {
 				<p>{props.feature.properties.description}</p>
 			</Show>
 			<dialog open={imageModalOpen()}>
-				<article>
+				<article class="image-modal-panel">
 					<header>
 						<button
 							type="button"

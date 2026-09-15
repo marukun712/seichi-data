@@ -3,6 +3,8 @@
 	height: 50vh;
 }
 
-.register-main {
-	margin-top: 6vh;
+.back {
+	display: inline-block;
+	margin-top: 2vh;
+	margin-bottom: 2vh;
 }

@@ -1,4 +1,5 @@
-import { Search } from "lucide-solid/icons";
+import { A } from "@solidjs/router";
+import { ArrowLeft, Search } from "lucide-solid/icons";
 import * as maplibregl from "maplibre-gl";
 import { encode } from "pluscodes";
 import { type Component, createSignal, onMount } from "solid-js";
@@ -95,6 +96,9 @@ const Register: Component = () => {
 
 	return (
 		<main class="container register-main">
+			<A class="back" href="/">
+				<ArrowLeft /> 戻る
+			</A>
 			<h2>聖地情報の登録方法</h2>
 			<p>
 				聖地情報を登録するためには、ラブライブ！学会オープンサーバーに参加する必要があります。

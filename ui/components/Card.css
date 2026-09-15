@@ -9,6 +9,11 @@
 	padding: 24px;
 }
 
+.image-modal-panel {
+	max-height: 90vh;
+	overflow-y: auto;
+}
+
 @media (max-width: 640px) {
 	.card-panel {
 		top: auto;
