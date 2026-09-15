@@ -2,8 +2,7 @@ import { Buffer } from "node:buffer";
 import { createPrivateKey } from "node:crypto";
 import { createAppAuth } from "@octokit/auth-app";
 import { Octokit } from "octokit";
-import type { Env } from "../main.ts";
-import { getEnv } from "./env.ts";
+import type { Bindings } from "./env.ts";
 import { type Feature, geoJSONSchema, type SpotData } from "./schema.ts";
 
 // GitHub Appの秘密鍵はPKCS1形式で発行されるが、
@@ -17,21 +16,24 @@ function toP8Pem(pem: string): string {
 	}) as string;
 }
 
-function createOctokit(env: Env): Octokit {
+function createOctokit(env: Bindings): Octokit {
 	return new Octokit({
 		authStrategy: createAppAuth,
 		auth: {
-			appId: getEnv(env, "GITHUB_APP_ID"),
-			privateKey: toP8Pem(getEnv(env, "GITHUB_APP_PRIVATE_KEY")),
-			installationId: getEnv(env, "GITHUB_INSTALLATION_ID"),
+			appId: env.GITHUB_APP_ID,
+			privateKey: toP8Pem(env.GITHUB_APP_PRIVATE_KEY),
+			installationId: env.GITHUB_INSTALLATION_ID,
 		},
 	});
 }
 
-export async function createSpotPR(spot: SpotData, env: Env): Promise<string> {
+export async function createSpotPR(
+	spot: SpotData,
+	env: Bindings,
+): Promise<string> {
 	const octokit = createOctokit(env);
-	const owner = getEnv(env, "GITHUB_REPO_OWNER");
-	const repo = getEnv(env, "GITHUB_REPO_NAME");
+	const owner = env.GITHUB_REPO_OWNER;
+	const repo = env.GITHUB_REPO_NAME;
 	const uuid = crypto.randomUUID();
 	const branchName = `add-spot/${uuid}`;
 

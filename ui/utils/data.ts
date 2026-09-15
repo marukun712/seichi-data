@@ -1,35 +1,26 @@
 import {
-	type FeatureView,
-	featureSchema,
-	geoJSONSchema,
+	featureResSchema,
 	seriesJSONSchema,
 	tagsSchema,
 } from "../../src/schema.ts";
 
-export async function loadSeriesAndFeatures() {
+export async function loadFilters() {
 	const seriesRes = await fetch("/series.json");
 	const { series } = seriesJSONSchema.parse(await seriesRes.json());
 
-	const features: FeatureView[] = [];
-	for (const s of series) {
-		const geoRes = await fetch(`/${s.id}.geojson`);
-		const { features: raw } = geoJSONSchema.parse(await geoRes.json());
-		for (const f of raw) {
-			const parsed = featureSchema.safeParse(f);
-			if (!parsed.success) continue;
-			features.push({
-				type: "Feature",
-				id: parsed.data.id,
-				geometry: parsed.data.geometry,
-				properties: { ...parsed.data.properties, series: s },
-			});
-		}
-	}
+	const tagsRes = await fetch("/tags.json");
+	const tags = tagsSchema.parse(await tagsRes.json());
 
-	return { series, features };
+	return { series, tags };
 }
 
-export async function loadTags() {
-	const tagsRes = await fetch("/tags.json");
-	return tagsSchema.parse(await tagsRes.json());
+export async function loadFeatures(series: string[], tags: string[]) {
+	const params = new URLSearchParams();
+	for (const s of series) params.append("series", s);
+	for (const t of tags) params.append("tags", t);
+
+	const res = await fetch(`/api/features?${params.toString()}`);
+	const parsed = featureResSchema.parse(await res.json());
+
+	return parsed;
 }

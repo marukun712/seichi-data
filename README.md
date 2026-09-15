@@ -35,7 +35,7 @@ cp .env.example .env
 |---|---|---|
 | `DISCORD_APPLICATION_ID` | Discord Application の ID | Discord 開発者ポータル > General Information |
 | `DISCORD_PUBLIC_KEY` | Discord Application の Public Key | Discord 開発者ポータル > General Information |
-| `DISCORD_BOT_TOKEN` | Discord Bot のトークン | Discord 開発者ポータル > Bot |
+| `DISCORD_TOKEN` | Discord Bot のトークン | Discord 開発者ポータル > Bot |
 | `DISCORD_GUILD_ID` | 対象の Discord サーバー ID | サーバーを右クリック > ID をコピー (開発者モード要) |
 | `GITHUB_APP_ID` | GitHub App の ID | GitHub > Settings > Developer settings > GitHub Apps |
 | `GITHUB_APP_PRIVATE_KEY` | GitHub App の秘密鍵 | GitHub App の設定画面で生成 |

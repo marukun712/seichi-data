@@ -1,36 +1,79 @@
-import type { ExecutionContext } from "@cloudflare/workers-types";
-import type {
-	APIApplicationCommandAutocompleteInteraction,
-	APIApplicationCommandInteractionDataAttachmentOption,
-	APIApplicationCommandInteractionDataStringOption,
-	APIChatInputApplicationCommandInteraction,
-	APIInteraction,
-} from "discord.js";
 import {
-	ApplicationCommandOptionType,
-	ApplicationCommandType,
-	InteractionResponseType,
-	InteractionType,
-} from "discord.js";
+	DiscordHono,
+	makeAttachmentOption,
+	makeSlashCommand,
+	makeStringOption,
+} from "discord-hono";
+import { Hono } from "hono";
 import { decode } from "pluscodes";
 import seriesJson from "./public/series.json" with { type: "json" };
 import tagsJson from "./public/tags.json" with { type: "json" };
-import { checkMemberAge, verifyDiscordSignature } from "./src/discord.ts";
+import { checkMemberAge } from "./src/discord.ts";
+import type { Bindings, Env } from "./src/env.ts";
+import { findLocation } from "./src/geocode.ts";
 import { createSpotPR } from "./src/github.ts";
 import { fetchImage } from "./src/image.ts";
-import { seriesSchema, spotInputSchema, tagsSchema } from "./src/schema.ts";
+import {
+	type FeatureView,
+	geoJSONSchema,
+	seriesJSONSchema,
+	spotInputSchema,
+	tagsSchema,
+} from "./src/schema.ts";
 
-const getSeries = (id: string) =>
-	seriesSchema.parse(seriesJson.series.find((s) => s.id === id));
-
+const allSeries = seriesJSONSchema.parse(seriesJson).series;
 const allTags = tagsSchema.parse(tagsJson);
 
-// tagsオプションは「tag1,tag2,」のようなカンマ区切り文字列として運用し、
-// 最後の(未確定の)セグメントをtags.jsonと前方一致させて補完候補を返す
+const getSeries = (id: string) => allSeries.find((s) => s.id === id);
+
+const features: { type: "FeatureCollection"; features: FeatureView[] } = {
+	type: "FeatureCollection",
+	features: [],
+};
+
+await Promise.all(
+	allSeries.map(async (s) => {
+		try {
+			const geojsonModule = await import(`./public/${s.id}.geojson`, {
+				with: { type: "json" },
+			});
+			const parsed = geoJSONSchema.safeParse(geojsonModule.default);
+			if (!parsed.success) {
+				console.error(`Invalid geojson for ${s.id}:`, parsed.error);
+				return;
+			}
+			parsed.data.features.forEach((f) => {
+				features.features.push({
+					type: "Feature",
+					id: f.id,
+					geometry: f.geometry,
+					properties: { ...f.properties, series: s },
+				});
+			});
+		} catch (err) {
+			console.error(`Failed to load geojson for ${s.id}:`, err);
+		}
+	}),
+);
+
+export const spotCommand = makeSlashCommand("spot", "聖地を投稿します").options(
+	[
+		makeStringOption("series", "シリーズ")
+			.required(true)
+			.choices(seriesJson.series.map((s) => ({ name: s.id, value: s.id }))),
+		makeStringOption("title", "場所の名前を入力").required(true),
+		makeStringOption("pluscode", "場所コードを入力").required(true),
+		makeStringOption("description", "場所の説明を入力"),
+		makeStringOption("tags", "タグをカンマ区切りで入力").autocomplete(true),
+		makeAttachmentOption("image", "画像 (5MBまで)"),
+	],
+);
+
 function buildTagAutocompleteChoices(
 	rawValue: string,
 ): { name: string; value: string }[] {
 	const segments = rawValue.split(",").map((s) => s.trim());
+	// 補完対象は最後のタグ
 	const currentSegment = segments[segments.length - 1] ?? "";
 	const confirmedTags = segments.slice(0, -1).filter((s) => s.length > 0);
 
@@ -44,224 +87,140 @@ function buildTagAutocompleteChoices(
 		});
 }
 
-export interface Env {
-	DISCORD_PUBLIC_KEY: string;
-	DISCORD_BOT_TOKEN: string;
-	DISCORD_GUILD_ID: string;
-	DISCORD_APPLICATION_ID: string;
-	GITHUB_APP_ID: string;
-	GITHUB_APP_PRIVATE_KEY: string;
-	GITHUB_INSTALLATION_ID: string;
-	GITHUB_REPO_OWNER: string;
-	GITHUB_REPO_NAME: string;
-}
+const bot = new DiscordHono<Env>().autocomplete(
+	"spot",
+	(c) =>
+		c.resAutocomplete(
+			c.focused
+				? buildTagAutocompleteChoices(String(c.focused.value ?? ""))
+				: [],
+		),
+	(c) =>
+		c.flags("EPHEMERAL").resDefer(async (c) => {
+			try {
+				const parsed = spotInputSchema.safeParse({
+					series: c.var.series,
+					title: c.var.title,
+					plusCode: c.var.pluscode,
+					description: c.var.description ?? null,
+					tags: c.var.tags ?? null,
+					image: c.var.image ?? null,
+				});
 
-// APIInteractionは複数の種類のInteractionを合わせたUnion型なので、
-// スラッシュコマンド用の処理に進む前に型を絞り込む必要がある
-function isChatInputCommand(
-	interaction: APIInteraction,
-): interaction is APIChatInputApplicationCommandInteraction {
-	return (
-		interaction.type === InteractionType.ApplicationCommand &&
-		interaction.data.type === ApplicationCommandType.ChatInput
-	);
-}
+				if (!parsed.success) {
+					await c.followup("入力内容が不正です。もう一度お試しください。");
+					return;
+				}
 
-function isAutocomplete(
-	interaction: APIInteraction,
-): interaction is APIApplicationCommandAutocompleteInteraction {
-	return interaction.type === InteractionType.ApplicationCommandAutocomplete;
-}
+				const { series, title, plusCode, description, tags, image } =
+					parsed.data;
 
-function handleTagsAutocomplete(
-	interaction: APIApplicationCommandAutocompleteInteraction,
-): Response {
-	const options = interaction.data.options ?? [];
-	const focused = options.find(
-		(o): o is APIApplicationCommandInteractionDataStringOption =>
-			o.name === "tags" &&
-			o.type === ApplicationCommandOptionType.String &&
-			"focused" in o &&
-			o.focused === true,
-	);
+				const selectedTags = [
+					...new Set(
+						(tags ?? "")
+							.split(",")
+							.map((t) => t.trim())
+							.filter((t) => allTags.includes(t)),
+					),
+				];
 
-	const choices = focused ? buildTagAutocompleteChoices(focused.value) : [];
+				const seriesData = getSeries(series);
+				if (!seriesData) {
+					await c.followup("不正なシリーズです");
+					return;
+				}
 
-	return new Response(
-		JSON.stringify({
-			type: InteractionResponseType.ApplicationCommandAutocompleteResult,
-			data: { choices },
-		}),
-		{ headers: { "Content-Type": "application/json" } },
-	);
-}
+				if (plusCode.indexOf("+") !== 8) {
+					await c.followup("フルの場所コードを入力してください");
+					return;
+				}
 
-async function handleSpotCommand(
-	interaction: APIChatInputApplicationCommandInteraction,
-	env: Env,
-): Promise<void> {
-	// Discordはインタラクションへの応答を3秒以内に返す必要があるため、
-	// 先にDeferredで応答しておき、後からこの関数で結果を編集して伝える
-	const followUp = async (content: string) => {
-		await fetch(
-			`https://discord.com/api/v10/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`,
-			{
-				method: "PATCH",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ content, flags: 64 }),
-			},
-		);
-	};
+				const user = c.interaction.member?.user ?? c.interaction.user;
+				if (!user) throw new Error("No user in interaction");
 
-	try {
-		const options = interaction.data.options ?? [];
+				const isEligible = await checkMemberAge(user.id, c.env);
+				if (!isEligible) {
+					await c.followup(
+						"投稿にはサーバー参加から3日以上経過している必要があります。",
+					);
+					return;
+				}
 
-		const getString = (name: string): string | undefined =>
-			options.find(
-				(o): o is APIApplicationCommandInteractionDataStringOption =>
-					o.name === name && o.type === ApplicationCommandOptionType.String,
-			)?.value;
+				const coords = decode(plusCode);
+				if (!coords) {
+					await c.followup("場所コードから座標を取得できませんでした。");
+					return;
+				}
 
-		const getAttachmentId = (name: string): string | undefined =>
-			options.find(
-				(o): o is APIApplicationCommandInteractionDataAttachmentOption =>
-					o.name === name && o.type === ApplicationCommandOptionType.Attachment,
-			)?.value;
+				let imageBytes: Uint8Array | null = null;
 
-		const parsed = spotInputSchema.safeParse({
-			series: getString("series"),
-			title: getString("title"),
-			plusCode: getString("pluscode"),
-			description: getString("description") ?? null,
-			imageOptionId: getAttachmentId("image") ?? null,
-			tags: getString("tags") ?? null,
-		});
+				if (image) {
+					const attachment = c.ref.attachments?.[image];
+					if (attachment && attachment.size > 5 * 1024 * 1024) {
+						await c.followup(
+							"画像が大きすぎます。5MB以下の画像を使用してください。",
+						);
+						return;
+					}
+					if (attachment) imageBytes = await fetchImage(attachment.url);
+				}
 
-		if (!parsed.success) {
-			await followUp("入力内容が不正です。もう一度お試しください。");
-			return;
-		}
+				const prUrl = await createSpotPR(
+					{
+						series: seriesData,
+						title,
+						lat: coords.latitude,
+						lng: coords.longitude,
+						description,
+						imageBytes,
+						tags: selectedTags,
+						discordUsername: user.username,
+						discordUserId: user.id,
+					},
+					c.env,
+				);
 
-		const { series, title, plusCode, description, imageOptionId, tags } =
-			parsed.data;
-
-		// tags.jsonに存在するタグのみを有効な入力として扱う(重複は除く)
-		const selectedTags = [
-			...new Set(
-				(tags ?? "")
-					.split(",")
-					.map((t) => t.trim())
-					.filter((t) => allTags.includes(t)),
-			),
-		];
-
-		// 短縮形の場所コードは基準位置がないと座標に変換できないため、
-		// "+"が9文字目にあるフル桁の場所コードのみ受け付ける
-		if (plusCode.indexOf("+") !== 8) {
-			await followUp("フルの場所コードを入力してください");
-			return;
-		}
-
-		const user = interaction.member?.user ?? interaction.user;
-		if (!user) throw new Error("No user in interaction");
-
-		// 参加直後のアカウントによる荒らし投稿を防ぐための制限
-		const isEligible = await checkMemberAge(user.id, env);
-		if (!isEligible) {
-			await followUp(
-				"投稿にはサーバー参加から3日以上経過している必要があります。",
-			);
-			return;
-		}
-
-		const coords = decode(plusCode);
-		if (!coords) {
-			await followUp("場所コードから座標を取得できませんでした。");
-			return;
-		}
-
-		let imageBytes: Uint8Array | null = null;
-
-		const attachment = imageOptionId
-			? interaction.data?.resolved?.attachments?.[imageOptionId]
-			: undefined;
-
-		if (attachment) {
-			if (attachment.size > 5 * 1024 * 1024) {
-				await followUp("画像が大きすぎます。5MB以下の画像を使用してください。");
-				return;
+				await c.followup(
+					`投稿を受け付けました。レビュー後にマップへ反映されます。\nPR: ${prUrl}`,
+				);
+			} catch (err) {
+				console.error(err);
+				await c.followup("処理中にエラーが発生しました。").catch(console.error);
 			}
+		}),
+);
 
-			imageBytes = await fetchImage(attachment.url);
-		}
+const app = new Hono<{ Bindings: Bindings }>();
 
-		const prUrl = await createSpotPR(
-			{
-				series: getSeries(series),
-				title,
-				lat: coords.latitude,
-				lng: coords.longitude,
-				description,
-				imageBytes,
-				tags: selectedTags,
-				discordUsername: user.username,
-				discordUserId: user.id,
-			},
-			env,
-		);
+app.get("/api/geocode", async (c) => {
+	const q = c.req.query("q");
+	if (!q) return c.body(null, 400);
 
-		await followUp(
-			`投稿を受け付けました。レビュー後にマップへ反映されます。\nPR: ${prUrl}`,
-		);
-	} catch (err) {
-		console.error(err);
-		await followUp("処理中にエラーが発生しました。").catch(console.error);
-	}
-}
+	const location = await findLocation(q);
+	return c.json({ location });
+});
 
-export default {
-	async fetch(
-		req: Request,
-		env: Env,
-		ctx: ExecutionContext,
-	): Promise<Response> {
-		if (
-			req.method !== "POST" ||
-			new URL(req.url).pathname !== "/interactions"
-		) {
-			return new Response(null, { status: 404 });
-		}
+app.get("/api/features", (c) => {
+	const series = c.req.queries("series") ?? [];
+	const tags = c.req.queries("tags") ?? [];
 
-		const { valid, body } = await verifyDiscordSignature(req, env);
-		if (!valid) return new Response(null, { status: 401 });
+	const result = features.features.filter((feature) => {
+		const seriesMatch =
+			series.length === 0 || series.includes(feature.properties.series.id);
 
-		const interaction: APIInteraction = JSON.parse(body);
+		const tagsMatch =
+			tags.length === 0 ||
+			tags.some((tag) => feature.properties.tags?.includes(tag));
 
-		if (interaction.type === InteractionType.Ping) {
-			return new Response(
-				JSON.stringify({ type: InteractionResponseType.Pong }),
-				{ headers: { "Content-Type": "application/json" } },
-			);
-		}
+		return seriesMatch && tagsMatch;
+	});
 
-		if (isAutocomplete(interaction)) {
-			return handleTagsAutocomplete(interaction);
-		}
+	return c.json({
+		type: "FeatureCollection",
+		features: result,
+	});
+});
 
-		if (isChatInputCommand(interaction)) {
-			// GitHub PR作成などの処理は3秒のDiscord応答期限に収まらない可能性があるため、
-			// 先にDeferredを返してからwaitUntilでWorkerを終了させずに処理を継続する
-			ctx.waitUntil(handleSpotCommand(interaction, env).catch(console.error));
+app.mount("/interactions", bot.fetch);
 
-			return new Response(
-				JSON.stringify({
-					type: InteractionResponseType.DeferredChannelMessageWithSource,
-					data: { flags: 64 },
-				}),
-				{ headers: { "Content-Type": "application/json" } },
-			);
-		}
-
-		return new Response(null, { status: 400 });
-	},
-};
+export default app;

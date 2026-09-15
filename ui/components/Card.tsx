@@ -1,7 +1,7 @@
 import { Image, X, XIcon } from "lucide-solid";
 import { createSignal, For, Show } from "solid-js";
-import type { FeatureView } from "../../src/schema.ts";
 import "./Card.css";
+import type { FeatureView } from "../../src/schema.ts";
 
 interface Props {
 	feature: FeatureView;

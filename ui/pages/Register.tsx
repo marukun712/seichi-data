@@ -1,29 +1,66 @@
+import { Search } from "lucide-solid/icons";
+import * as maplibregl from "maplibre-gl";
+import { encode } from "pluscodes";
 import { type Component, createSignal, onMount } from "solid-js";
-import { createClipboardCopy } from "../hooks/createClipboardCopy.ts";
-import { createPlusCodePicker } from "../hooks/createPlusCodePicker.ts";
-import { searchLocation } from "../utils/geocode.ts";
 import { loadTwitterWidgets } from "../utils/twitter.ts";
 import "./Register.css";
-import { Search } from "lucide-solid/icons";
+
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 const PluscodeMap = () => {
-	const { plusCode, setContainer, flyTo } = createPlusCodePicker();
-	const { copied, copy } = createClipboardCopy();
+	let container!: HTMLDivElement;
+	let map: maplibregl.Map | undefined;
+	let marker: maplibregl.Marker | undefined;
+
+	const [plusCode, setPlusCode] = createSignal<string | null>(null);
+	const [copied, setCopied] = createSignal(false);
 	const [query, setQuery] = createSignal("");
+
+	const copyPlusCode = async () => {
+		const code = plusCode();
+		if (!code) return;
+		await navigator.clipboard.writeText(code);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
 
 	const search = async () => {
 		const q = query().trim();
-		if (!q) return;
-		const location = await searchLocation(q);
-		if (!location) return;
-		flyTo(location.lat, location.lon);
+		if (!q || !map) return;
+
+		const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+		if (!res.ok) return;
+
+		const body: { location: { lat: number; lon: number } | null } =
+			await res.json();
+		if (!body.location) return;
+
+		map.flyTo({ center: [body.location.lon, body.location.lat], zoom: 15 });
 	};
 
-	const copyPlusCode = () => {
-		const code = plusCode();
-		if (!code) return;
-		copy(code);
-	};
+	onMount(() => {
+		if (!container) return;
+		maplibregl.setWorkerUrl(
+			"https://esm.sh/maplibre-gl@6.0.0/dist/maplibre-gl-worker.mjs",
+		);
+		map = new maplibregl.Map({
+			container,
+			style: MAP_STYLE,
+			center: [137.5, 36.5],
+			zoom: 5,
+		});
+		map.on("click", (e) => {
+			const { lat, lng } = e.lngLat;
+			const code = encode({ latitude: lat, longitude: lng }, 10);
+			if (!code) return;
+			setPlusCode(code);
+
+			marker?.remove();
+			marker = new maplibregl.Marker()
+				.setLngLat([lng, lat])
+				.addTo(map as maplibregl.Map);
+		});
+	});
 
 	return (
 		<div>
@@ -46,7 +83,7 @@ const PluscodeMap = () => {
 			<button type="button" onClick={copyPlusCode} disabled={!plusCode()}>
 				{copied() ? "コピーしました" : "コピー"}
 			</button>
-			<div ref={setContainer} class="pluscode-map" />
+			<div ref={container} class="pluscode-map" />
 		</div>
 	);
 };

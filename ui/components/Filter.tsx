@@ -1,7 +1,6 @@
 import { Search, X } from "lucide-solid";
 import { createSignal, For } from "solid-js";
-import type { Feature, FeatureView, Series } from "../../src/schema.ts";
-import { createFeatureSearch } from "../hooks/createFeatureSearch.ts";
+import type { Series } from "../../src/schema.ts";
 import "./Filter.css";
 
 interface Props {
@@ -9,23 +8,13 @@ interface Props {
 	selectedSeries: string[];
 	tags: string[];
 	selectedTags: string[];
-	features: FeatureView[];
 	onSeriesToggle: (id: string) => void;
 	onSeriesClear: () => void;
 	onTagToggle: (tag: string) => void;
-	onFeatureSelect: (f: Feature) => void;
 }
 
 const Filter = (props: Props) => {
-	const { results, search } = createFeatureSearch(() => props.features);
 	const [open, setOpen] = createSignal(false);
-
-	const onSearchInput = (q: string) => {
-		const exact = search(q);
-		if (exact) {
-			props.onFeatureSelect(exact);
-		}
-	};
 
 	return (
 		<>
@@ -47,17 +36,6 @@ const Filter = (props: Props) => {
 							<X />
 						</button>
 					</header>
-					<input
-						type="text"
-						placeholder="スポットを検索..."
-						list="search-results"
-						onInput={(e) => onSearchInput(e.currentTarget.value)}
-					/>
-					<datalist id="search-results">
-						<For each={results()}>
-							{(f) => <option value={f.properties.title} />}
-						</For>
-					</datalist>
 					<button
 						type="button"
 						classList={{
