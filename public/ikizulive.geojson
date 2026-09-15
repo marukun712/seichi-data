@@ -14,7 +14,26 @@
       "properties": {
         "title": "駒形橋",
         "description": "ツイート・LLDなどに複数回登場",
-        "image": [ "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg" ]
+        "image": [
+          "images/2c9c3c21-ea19-4adb-b98e-2313b2109484.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "89cde397-3d53-4104-b863-dfdf9bea2772",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.670688,
+          35.793813
+        ]
+      },
+      "properties": {
+        "title": "test",
+        "tags": [
+          "アニメ"
+        ]
       }
     }
   ]
