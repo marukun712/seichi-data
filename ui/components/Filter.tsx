@@ -1,9 +1,12 @@
-import { Search, X } from "lucide-solid";
-import { createSignal, For } from "solid-js";
+import { X } from "lucide-solid";
+import { For } from "solid-js";
 import type { Series } from "../../src/schema.ts";
 import "./Filter.css";
 
 interface Props {
+	open: boolean;
+	onClose: () => void;
+	resultCount: number;
 	series: Series[];
 	selectedSeries: string[];
 	tags: string[];
@@ -14,76 +17,60 @@ interface Props {
 }
 
 const Filter = (props: Props) => {
-	const [open, setOpen] = createSignal(false);
-
 	return (
-		<>
-			<button
-				type="button"
-				class="filter-trigger"
-				onClick={() => setOpen(true)}
-			>
-				<Search /> フィルターを開く
-			</button>
-			<dialog open={open()}>
-				<article class="filter-panel">
-					<header>
-						<button
-							type="button"
-							aria-label="閉じる"
-							onClick={() => setOpen(false)}
-						>
-							<X />
-						</button>
-					</header>
-					<button
-						type="button"
-						classList={{
-							"filter-inactive": props.selectedSeries.length !== 0,
-						}}
-						onClick={props.onSeriesClear}
-					>
-						すべて
+		<dialog open={props.open}>
+			<article class="filter-panel">
+				<header>
+					<button type="button" aria-label="閉じる" onClick={props.onClose}>
+						<X />
 					</button>
-					<div class="filter-chip-list">
-						<For each={props.series}>
-							{(s) => {
-								const isActive = () => props.selectedSeries.includes(s.id);
-								return (
-									<button
-										type="button"
-										classList={{
-											"filter-series-active": isActive(),
-											"filter-inactive": !isActive(),
-										}}
-										style={
-											isActive() ? { "--series-color": s.color } : undefined
-										}
-										onClick={() => props.onSeriesToggle(s.id)}
-									>
-										{s.name}
-									</button>
-								);
-							}}
-						</For>
-					</div>
-					<div class="filter-chip-list">
-						<For each={props.tags}>
-							{(tag) => (
-								<label>
-									<input
-										type="checkbox"
-										checked={props.selectedTags.includes(tag)}
-										onChange={() => props.onTagToggle(tag)}
-									/>
-									{tag}
-								</label>
-							)}
-						</For>
-					</div>
-				</article>
-			</dialog>
-		</>
+				</header>
+				<p class="hit-count">{props.resultCount}件ヒット</p>
+				<button
+					type="button"
+					classList={{
+						"filter-inactive": props.selectedSeries.length !== 0,
+					}}
+					onClick={props.onSeriesClear}
+				>
+					すべて
+				</button>
+				<div class="filter-chip-list">
+					<For each={props.series}>
+						{(s) => {
+							const isActive = () => props.selectedSeries.includes(s.id);
+							return (
+								<button
+									type="button"
+									classList={{
+										"filter-series-active": isActive(),
+										"filter-inactive": !isActive(),
+									}}
+									style={isActive() ? { "--series-color": s.color } : undefined}
+									onClick={() => props.onSeriesToggle(s.id)}
+								>
+									{s.name}
+								</button>
+							);
+						}}
+					</For>
+				</div>
+				<div class="filter-chip-list">
+					<For each={props.tags}>
+						{(tag) => (
+							<label>
+								<input
+									type="checkbox"
+									checked={props.selectedTags.includes(tag)}
+									onChange={() => props.onTagToggle(tag)}
+								/>
+								{tag}
+							</label>
+						)}
+					</For>
+				</div>
+			</article>
+		</dialog>
 	);
 };
 

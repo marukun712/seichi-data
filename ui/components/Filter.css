@@ -1,9 +1,3 @@
-.filter-trigger {
-	position: fixed;
-	top: 200px;
-	left: 16px;
-}
-
 .filter-panel {
 	max-height: 90vh;
 	overflow-y: auto;

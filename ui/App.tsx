@@ -15,6 +15,7 @@ const Home = () => {
 	const [selectedTags, setSelectedTags] = createSignal<string[]>([]);
 	const [features, setFeatures] = createSignal<FeatureView[]>([]);
 	const [selected, setSelected] = createSignal<FeatureView | null>(null);
+	const [filterOpen, setFilterOpen] = createSignal(false);
 
 	const toggleSeries = (id: string) => {
 		setSelectedSeries((prev) =>
@@ -54,8 +55,14 @@ const Home = () => {
 				seriesColor={seriesColor()}
 				onFeatureClick={setSelected}
 			/>
-			<About />
+			<About
+				resultCount={features().length}
+				onOpenFilter={() => setFilterOpen(true)}
+			/>
 			<Filter
+				open={filterOpen()}
+				onClose={() => setFilterOpen(false)}
+				resultCount={features().length}
 				series={series()}
 				selectedSeries={selectedSeries()}
 				tags={tags()}
