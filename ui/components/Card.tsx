@@ -13,17 +13,29 @@ const Card = (props: Props) => {
 
 	return (
 		<article class="card-panel">
-			<button type="button" onClick={props.onClose} aria-label="閉じる">
-				<X />
-			</button>
-			<h4>{props.feature.properties.series.name}</h4>
-			<h3>{props.feature.properties.title}</h3>
-			<Show when={props.feature.properties.image?.length}>
-				<button type="button" onClick={() => setImageModalOpen(true)}>
-					<Image />
-					画像を見る
+			<div class="card-header">
+				<strong>{props.feature.properties.series.name}</strong>
+				<button
+					type="button"
+					class="card-button"
+					onClick={props.onClose}
+					aria-label="閉じる"
+				>
+					<X />
 				</button>
-			</Show>
+			</div>
+			<div class="card-body">
+				<h4>{props.feature.properties.title}</h4>
+				<Show when={props.feature.properties.image?.length}>
+					<button
+						type="button"
+						class="card-button"
+						onClick={() => setImageModalOpen(true)}
+					>
+						<Image />
+					</button>
+				</Show>
+			</div>
 			<Show when={props.feature.properties.description}>
 				<p>{props.feature.properties.description}</p>
 			</Show>
