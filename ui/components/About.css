@@ -27,4 +27,20 @@
 	.about-panel {
 		right: 16px;
 	}
+
+	.about-panel p {
+		font-size: 0.75rem;
+	}
+
+	.square-button {
+		width: 48px;
+		height: 48px;
+		gap: 2px;
+		font-size: 0.6rem;
+	}
+
+	.square-button svg {
+		width: 16px;
+		height: 16px;
+	}
 }
