@@ -4,10 +4,6 @@
 	left: 16px;
 }
 
-.about-logo {
-	display: none;
-}
-
 .action-row {
 	display: flex;
 	gap: 8px;
@@ -35,18 +31,16 @@
 		margin: 0;
 		display: flex;
 		align-items: center;
-		padding: 2px;
-		background-color: #fff5f8;
+		padding: 2px 8px;
+		background-color: var(--pico-primary-background);
 		border-radius: 0;
 	}
 
-	.about-logo {
-		display: block;
-		position: absolute;
-		left: 50%;
-		transform: translateX(-50%);
-		width: 32px;
-		height: 32px;
+	.about-title {
+		font-size: 0.75rem;
+		font-weight: bold;
+		white-space: nowrap;
+		color: white;
 	}
 
 	.action-row {
