@@ -14,7 +14,9 @@ const Card = (props: Props) => {
 	return (
 		<article class="card-panel">
 			<div class="card-header">
-				<strong>{props.feature.properties.series.name}</strong>
+				<strong class="card-series">
+					{props.feature.properties.series.name}
+				</strong>
 				<button
 					type="button"
 					class="card-button"
