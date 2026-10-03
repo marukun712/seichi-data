@@ -36,7 +36,7 @@
 		display: flex;
 		align-items: center;
 		padding: 2px;
-		background-color: var(--pico-primary-background);
+		background-color: #fff5f8;
 		border-radius: 0;
 	}
 
