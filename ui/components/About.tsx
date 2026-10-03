@@ -10,7 +10,7 @@ interface Props {
 const About = (props: Props) => {
 	return (
 		<article class="about-panel">
-			<span class="about-title">ラブライブシリーズ聖地情報マップ</span>
+			<span class="about-title">ラブライブ！シリーズ 聖地巡礼マップ</span>
 			<div class="action-row">
 				<A href="/register">
 					<button type="button" class="square-button">
