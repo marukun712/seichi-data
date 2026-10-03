@@ -14,7 +14,7 @@ const Card = (props: Props) => {
 	return (
 		<article class="card-panel">
 			<div class="card-header">
-				<strong class="card-series">
+				<strong class="card-text">
 					{props.feature.properties.series.name}
 				</strong>
 				<button
@@ -39,7 +39,7 @@ const Card = (props: Props) => {
 				</Show>
 			</div>
 			<Show when={props.feature.properties.description}>
-				<p>{props.feature.properties.description}</p>
+				<p class="card-text">{props.feature.properties.description}</p>
 			</Show>
 			<dialog open={imageModalOpen()}>
 				<article class="image-modal-panel">
