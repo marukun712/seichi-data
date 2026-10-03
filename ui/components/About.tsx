@@ -10,7 +10,11 @@ interface Props {
 const About = (props: Props) => {
 	return (
 		<article class="about-panel">
-			<p>ラブライブ！シリーズの聖地情報をまとめたマップです。</p>
+			<img
+				class="about-logo"
+				src="https://www.lovelive-academy.com/_next/image?url=%2Fofficial_icon.webp&w=48&q=75"
+				alt="Official Icon"
+			/>
 			<div class="action-row">
 				<A href="/register">
 					<button type="button" class="square-button">
